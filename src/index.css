@@ -5,7 +5,7 @@
 @layer base {
   body {
     font-family: 'Inter', sans-serif;
-    @apply bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-200 overflow-hidden transition-colors duration-300;
+    @apply bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-50 overflow-hidden transition-colors duration-300;
   }
 
   h1, h2, h3, h4, h5, h6, .font-heading {
@@ -19,21 +19,29 @@
   }
   
   .glass-card {
-    @apply bg-white/50 border border-slate-200/50 shadow-md backdrop-blur-md dark:bg-slate-800/40 dark:border-white/5 dark:shadow-lg;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   }
 
-  .text-glow-emerald {
-    text-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+  .dark .glass-card {
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
-  .dark .text-glow-emerald {
-    text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+
+  .text-glow-accent {
+    text-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+  }
+  .dark .text-glow-accent {
+    text-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
   }
   
-  .text-glow-rose {
-    text-shadow: 0 0 10px rgba(244, 63, 94, 0.2);
+  .text-glow-coral {
+    text-shadow: 0 0 10px rgba(255, 107, 107, 0.2);
   }
-  .dark .text-glow-rose {
-    text-shadow: 0 0 10px rgba(244, 63, 94, 0.5);
+  .dark .text-glow-coral {
+    text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
   }
 
   ::-webkit-scrollbar {
@@ -51,14 +59,11 @@
   }
 }
 
-.cosmic-bg {
-  background: radial-gradient(circle at 15% 50%, rgba(16, 185, 129, 0.05), transparent 25%),
-              radial-gradient(circle at 85% 30%, rgba(59, 130, 246, 0.05), transparent 25%),
-              #f8fafc; /* slate-50 */
+.scibayan-bg {
+  /* Minimal plain background inspired by SciBayan */
+  background-color: #ffffff;
 }
 
-.dark .cosmic-bg {
-  background: radial-gradient(circle at 15% 50%, rgba(16, 185, 129, 0.08), transparent 25%),
-              radial-gradient(circle at 85% 30%, rgba(59, 130, 246, 0.08), transparent 25%),
-              #020617; /* slate-950 */
+.dark .scibayan-bg {
+  background-color: #0f172a;
 }

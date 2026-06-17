@@ -9,7 +9,26 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
-        heading: ['Outfit', 'sans-serif'],
+        heading: ['Outfit', 'sans-serif'], // Keep Outfit for headings for that modern feel
+      },
+      colors: {
+        navy: {
+          50: '#eef2f6',
+          100: '#dce5ee',
+          200: '#b9cbe1',
+          300: '#96b1d4',
+          400: '#7397c7',
+          500: '#507dba',
+          600: '#406495',
+          700: '#304b70',
+          800: '#20324a',
+          900: '#101925',
+        },
+        accent: {
+          teal: '#00d2ff',
+          coral: '#ff6b6b',
+          gold: '#ffd166',
+        }
       }
     },
   },

@@ -225,22 +225,22 @@ const AuthScreen = () => {
   };
 
   return (
-    <div className="flex h-screen cosmic-bg items-center justify-center p-4">
+    <div className="flex h-screen scibayan-bg items-center justify-center p-4">
       <div className="glass-panel p-8 rounded-3xl max-w-md w-full">
-        <div className="flex justify-center mb-6 text-emerald-500 drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]">
+        <div className="flex justify-center mb-6 text-navy-500 drop-shadow-[0_0_15px_rgba(0,210,255,0.5)]">
           <BrainCircuit size={56} strokeWidth={1.5}/>
         </div>
         <h2 className="text-3xl font-heading font-bold text-slate-800 dark:text-white mb-6 text-center tracking-tight">AlphaTrade Pro</h2>
-        {error && <div className="bg-rose-100 dark:bg-rose-500/10 border border-rose-300 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 p-3 rounded-xl mb-4 text-sm text-center">{error}</div>}
+        {error && <div className="bg-rose-100 dark:bg-accent-coral/10 border border-rose-300 dark:border-accent-coral/20 text-accent-coral dark:text-accent-coral p-3 rounded-xl mb-4 text-sm text-center">{error}</div>}
         <form className="space-y-4">
           <div>
-            <input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all" required />
+            <input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:outline-none focus:border-navy-500/50 focus:ring-1 focus:ring-navy-500/50 transition-all" required />
           </div>
           <div>
-            <input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all" required />
+            <input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:outline-none focus:border-navy-500/50 focus:ring-1 focus:ring-navy-500/50 transition-all" required />
           </div>
           <div className="flex gap-4 mt-8">
-            <button onClick={handleLogin} disabled={loading} className="flex-1 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold py-3 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all">Login</button>
+            <button onClick={handleLogin} disabled={loading} className="flex-1 bg-gradient-to-r from-navy-600 to-navy-500 hover:from-navy-500 hover:to-accent-teal text-white font-bold py-3 rounded-xl shadow-[0_0_20px_rgba(0,210,255,0.3)] transition-all">Login</button>
             <button onClick={handleSignup} disabled={loading} className="flex-1 glass-card hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-white font-bold py-3 rounded-xl transition-all">Sign Up</button>
           </div>
         </form>
@@ -252,10 +252,10 @@ const AuthScreen = () => {
 const Tooltip = ({ term, beginnerMode, explanation, children }) => {
   if (!beginnerMode) return <span>{children}</span>;
   return (
-    <span className="group relative cursor-help inline-block border-b border-dashed border-slate-400 dark:border-slate-500/50 hover:border-emerald-500/50 transition-colors">
+    <span className="group relative cursor-help inline-block border-b border-dashed border-slate-400 dark:border-slate-500/50 hover:border-navy-500/50 transition-colors">
       {children}
       <span className="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-3 w-56 text-xs glass-panel text-slate-700 dark:text-slate-200 rounded-xl z-[100] text-center font-normal">
-        <span className="font-bold text-emerald-600 dark:text-emerald-400 block mb-1">{term}</span>
+        <span className="font-bold text-navy-600 dark:text-accent-teal block mb-1">{term}</span>
         {explanation}
       </span>
     </span>
@@ -286,13 +286,13 @@ const DecisionChecklist = ({ type, lang }) => {
                 n[i] = !n[i];
                 setChecks(n);
               }}
-              className="mt-0.5 rounded bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-emerald-500 focus:ring-emerald-500/20 w-4 h-4"
+              className="mt-0.5 rounded bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-navy-500 focus:ring-navy-500/20 w-4 h-4"
             />
             <span className={`text-sm transition-colors ${checks[i] ? 'text-slate-400 dark:text-slate-500 line-through' : 'text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white'}`}>{item}</span>
           </label>
         ))}
       </div>
-      {allChecked && <div className="mt-4 text-xs font-bold text-emerald-500 dark:text-emerald-400 flex items-center gap-1 animate-pulse"><CheckCircle2 size={14}/> Ready to execute!</div>}
+      {allChecked && <div className="mt-4 text-xs font-bold text-navy-500 dark:text-accent-teal flex items-center gap-1 animate-pulse"><CheckCircle2 size={14}/> Ready to execute!</div>}
     </div>
   );
 };
@@ -302,14 +302,14 @@ const DecisionWidget = ({ data, lang, beginnerMode }) => {
   const { verdict, confidence, fiveSignals, summary, risks, whatWouldChange, shariah, 52: range52 } = data;
   
   const colors = {
-    BUY: 'bg-gradient-to-r from-emerald-500 to-emerald-400 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]',
+    BUY: 'bg-gradient-to-r from-navy-500 to-accent-teal text-white shadow-[0_0_20px_rgba(0,210,255,0.3)]',
     HOLD: 'bg-gradient-to-r from-blue-500 to-blue-400 text-white shadow-[0_0_20px_rgba(59,130,246,0.3)]',
-    SELL: 'bg-gradient-to-r from-rose-500 to-rose-400 text-white shadow-[0_0_20px_rgba(244,63,94,0.3)]',
+    SELL: 'bg-gradient-to-r from-accent-coral to-accent-coral text-white shadow-[0_0_20px_rgba(255,107,107,0.3)]',
     WATCH: 'bg-gradient-to-r from-amber-500 to-amber-400 text-white shadow-[0_0_20px_rgba(245,158,11,0.3)]',
     AVOID: 'bg-gradient-to-r from-red-700 to-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.3)]',
   };
   
-  const confColor = confidence === 'High' ? 'text-emerald-500 dark:text-emerald-400 text-glow-emerald' : confidence === 'Medium' ? 'text-amber-500 dark:text-amber-400' : 'text-rose-500 dark:text-rose-400 text-glow-rose';
+  const confColor = confidence === 'High' ? 'text-navy-500 dark:text-accent-teal text-glow-accent' : confidence === 'Medium' ? 'text-amber-500 dark:text-amber-400' : 'text-accent-coral dark:text-accent-coral text-glow-coral';
 
   return (
     <div className="mt-4 glass-panel rounded-3xl p-6 max-w-lg w-full" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
@@ -336,7 +336,7 @@ const DecisionWidget = ({ data, lang, beginnerMode }) => {
           </div>
           <div className="relative h-2.5 bg-slate-200 dark:bg-slate-900 rounded-full overflow-hidden border border-slate-300 dark:border-white/5">
             <div 
-              className="absolute top-0 bottom-0 w-3 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full shadow-[0_0_10px_rgba(56,189,248,0.8)] z-10" 
+              className="absolute top-0 bottom-0 w-3 bg-gradient-to-r from-accent-teal to-cyan-400 rounded-full shadow-[0_0_10px_rgba(56,189,248,0.8)] z-10" 
               style={{ left: `${Math.max(0, Math.min(100, ((range52.price - range52.low)/(range52.high - range52.low))*100))}%` }}
             />
           </div>
@@ -348,14 +348,14 @@ const DecisionWidget = ({ data, lang, beginnerMode }) => {
       <div className="space-y-3 mb-8">
         <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
           5 Core Signals
-          {beginnerMode && <span className="text-[9px] text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full">Beginner</span>}
+          {beginnerMode && <span className="text-[9px] text-navy-600 dark:text-accent-teal border border-navy-500/20 bg-navy-50 dark:bg-navy-500/10 px-2 py-0.5 rounded-full">Beginner</span>}
         </h4>
         <div className="grid grid-cols-1 gap-2">
           {Object.entries(fiveSignals).map(([key, sig]) => (
             <div key={key} className="flex items-center gap-4 bg-white/50 dark:bg-slate-900/40 p-3 rounded-2xl border border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
               <div className="shrink-0 p-2 rounded-xl bg-slate-100 dark:bg-slate-950">
-                {sig.state === 'bullish' ? <CheckCircle2 size={18} className="text-emerald-500 dark:text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" /> : 
-                 sig.state === 'bearish' ? <XCircle size={18} className="text-rose-500 dark:text-rose-400 drop-shadow-[0_0_8px_rgba(251,113,133,0.5)]" /> : 
+                {sig.state === 'bullish' ? <CheckCircle2 size={18} className="text-navy-500 dark:text-accent-teal drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" /> : 
+                 sig.state === 'bearish' ? <XCircle size={18} className="text-accent-coral dark:text-accent-coral drop-shadow-[0_0_8px_rgba(251,113,133,0.5)]" /> : 
                  <MinusCircle size={18} className="text-slate-400 dark:text-slate-500" />}
               </div>
               <div className="flex-1 min-w-0">
@@ -373,8 +373,8 @@ const DecisionWidget = ({ data, lang, beginnerMode }) => {
 
       {/* Shariah Note */}
       {shariah && (
-        <div className={`mb-8 p-4 rounded-2xl border ${shariah.compliant ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30' : 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30'}`}>
-          <div className={`font-heading font-bold mb-2 flex items-center gap-2 ${shariah.compliant ? 'text-emerald-600 dark:text-emerald-400 text-glow-emerald' : 'text-rose-600 dark:text-rose-400 text-glow-rose'}`}>
+        <div className={`mb-8 p-4 rounded-2xl border ${shariah.compliant ? 'bg-navy-50 dark:bg-navy-500/10 border-emerald-200 dark:border-navy-500/30' : 'bg-rose-50 dark:bg-accent-coral/10 border-rose-200 dark:border-accent-coral/30'}`}>
+          <div className={`font-heading font-bold mb-2 flex items-center gap-2 ${shariah.compliant ? 'text-navy-600 dark:text-accent-teal text-glow-accent' : 'text-accent-coral dark:text-accent-coral text-glow-coral'}`}>
             <Globe size={16}/> {shariah.compliant ? 'Shariah Compliant' : 'Not Shariah Compliant'}
           </div>
           <p className="text-sm text-slate-700 dark:text-slate-300 mb-2 leading-relaxed">{shariah.reason}</p>
@@ -387,9 +387,9 @@ const DecisionWidget = ({ data, lang, beginnerMode }) => {
       {/* Risks & Changes */}
       <div className="space-y-5 mb-4">
         <div>
-          <h4 className="text-[10px] font-bold text-rose-500 dark:text-rose-400 uppercase tracking-widest mb-2 flex items-center gap-2"><TrendingUp size={12}/> Key Risks</h4>
+          <h4 className="text-[10px] font-bold text-accent-coral dark:text-accent-coral uppercase tracking-widest mb-2 flex items-center gap-2"><TrendingUp size={12}/> Key Risks</h4>
           <ul className="list-none text-sm text-slate-700 dark:text-slate-300 space-y-2">
-            {risks?.map((r, i) => <li key={i} className="flex gap-2 items-start"><span className="text-rose-500/50">•</span> {r}</li>)}
+            {risks?.map((r, i) => <li key={i} className="flex gap-2 items-start"><span className="text-accent-coral/50">•</span> {r}</li>)}
           </ul>
         </div>
         <div>
@@ -418,16 +418,17 @@ const PortfolioTab = ({ lang, handleAnalyze, session, portfolio, setPortfolio, s
   const [livePrices, setLivePrices] = useState({});
 
   useEffect(() => {
-    if (!portfolio) return;
+    if (!portfolio || portfolio.length === 0) return;
     const fetchPrices = async () => {
-      const prices = {};
-      for (const item of portfolio) {
-        if (!prices[item.symbol]) {
-          const res = await getLivePrice(item.symbol);
-          if(res) prices[item.symbol] = res;
-        }
+      const symbols = portfolio.map(p => p.symbol);
+      const { data } = await supabase.from('stock_analyses').select('symbol, last_price, change_pct').in('symbol', symbols);
+      if (data) {
+        const prices = {};
+        data.forEach(row => {
+          prices[row.symbol] = { c: row.last_price, dp: row.change_pct };
+        });
+        setLivePrices(prices);
       }
-      setLivePrices(prices);
     };
     fetchPrices();
   }, [portfolio]);
@@ -443,7 +444,17 @@ const PortfolioTab = ({ lang, handleAnalyze, session, portfolio, setPortfolio, s
 
     if (data && data[0]) {
       setPortfolio([...portfolio, data[0]]);
-      getLivePrice(s).then(res => setLivePrices(p => ({...p, [s]: res})));
+      
+      const { data: cached } = await supabase.from('stock_analyses').select('last_price, change_pct').eq('symbol', s).single();
+      if (cached) {
+        setLivePrices(p => ({...p, [s]: { c: cached.last_price, dp: cached.change_pct }}));
+      } else {
+        const res = await getLivePrice(s);
+        if (res) {
+          await supabase.from('stock_analyses').upsert({ symbol: s, last_price: res.c, change_pct: res.dp });
+          setLivePrices(p => ({...p, [s]: res}));
+        }
+      }
     }
     
     setSymbol(''); setQty(''); setBuyPrice('');
@@ -461,24 +472,24 @@ const PortfolioTab = ({ lang, handleAnalyze, session, portfolio, setPortfolio, s
   return (
     <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       <h2 className="text-3xl font-heading font-bold text-slate-800 dark:text-white mb-8 flex items-center gap-3 drop-shadow-md">
-        <Briefcase size={28} className="text-emerald-500 dark:text-emerald-400" /> {t.portfolio}
+        <Briefcase size={28} className="text-navy-500 dark:text-accent-teal" /> {t.portfolio}
       </h2>
 
       <div className="glass-panel p-6 rounded-3xl mb-8">
         <form onSubmit={handleAdd} className="flex flex-wrap gap-4 items-end">
           <div className="flex-1 min-w-[120px]">
             <label className="block text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1 font-bold">Ticker</label>
-            <input type="text" value={symbol} onChange={e=>setSymbol(e.target.value)} placeholder="AAPL" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-800 dark:text-white uppercase focus:border-emerald-500/50 focus:outline-none" required dir="ltr"/>
+            <input type="text" value={symbol} onChange={e=>setSymbol(e.target.value)} placeholder="AAPL" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-800 dark:text-white uppercase focus:border-navy-500/50 focus:outline-none" required dir="ltr"/>
           </div>
           <div className="w-24">
             <label className="block text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1 font-bold">{t.qty}</label>
-            <input type="number" step="any" value={qty} onChange={e=>setQty(e.target.value)} placeholder="10" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:border-emerald-500/50 focus:outline-none" required />
+            <input type="number" step="any" value={qty} onChange={e=>setQty(e.target.value)} placeholder="10" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:border-navy-500/50 focus:outline-none" required />
           </div>
           <div className="w-32">
             <label className="block text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1 font-bold">{t.buyPrice}</label>
-            <input type="number" step="any" value={buyPrice} onChange={e=>setBuyPrice(e.target.value)} placeholder="150.00" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:border-emerald-500/50 focus:outline-none" required />
+            <input type="number" step="any" value={buyPrice} onChange={e=>setBuyPrice(e.target.value)} placeholder="150.00" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:border-navy-500/50 focus:outline-none" required />
           </div>
-          <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold transition-colors">{t.addStock}</button>
+          <button type="submit" className="bg-navy-600 hover:bg-navy-500 text-white px-8 py-3 rounded-xl font-bold transition-colors">{t.addStock}</button>
         </form>
       </div>
 
@@ -515,14 +526,14 @@ const PortfolioTab = ({ lang, handleAnalyze, session, portfolio, setPortfolio, s
 
               <div className="text-center" dir="ltr">
                 <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">{t.pnl}</div>
-                <div className={`font-mono text-lg font-bold ${currentPrice ? (pnl >= 0 ? 'text-emerald-500 dark:text-emerald-400 text-glow-emerald' : 'text-rose-500 dark:text-rose-400 text-glow-rose') : 'text-slate-400'}`}>
+                <div className={`font-mono text-lg font-bold ${currentPrice ? (pnl >= 0 ? 'text-navy-500 dark:text-accent-teal text-glow-accent' : 'text-accent-coral dark:text-accent-coral text-glow-coral') : 'text-slate-400'}`}>
                   {currentPrice ? `${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)} (${pnlPct.toFixed(2)}%)` : '-'}
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
                 <button onClick={() => { handleAnalyze(`Analyze my portfolio holding of ${item.symbol}. I bought ${item.qty} shares at $${item.buy_price}. How is it performing and what is your advice?`, item.symbol); setTab('chat'); }} className="text-xs bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg text-white font-bold transition-colors">{t.analyze}</button>
-                <button onClick={() => handleRemove(item.id)} className="text-slate-400 hover:text-rose-500 p-2 transition-colors"><Trash2 size={18}/></button>
+                <button onClick={() => handleRemove(item.id)} className="text-slate-400 hover:text-accent-coral p-2 transition-colors"><Trash2 size={18}/></button>
               </div>
             </div>
           );
@@ -537,7 +548,7 @@ const PortfolioTab = ({ lang, handleAnalyze, session, portfolio, setPortfolio, s
           <div className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{t.totalValue}</div>
           <div className="text-right">
             <div className="text-3xl font-heading font-black text-slate-800 dark:text-white tracking-tight">${totalValue.toFixed(2)}</div>
-            <div className={`font-mono text-lg font-bold ${totalValue >= totalCost ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'}`} dir="ltr">
+            <div className={`font-mono text-lg font-bold ${totalValue >= totalCost ? 'text-navy-500 dark:text-accent-teal' : 'text-accent-coral dark:text-accent-coral'}`} dir="ltr">
               {totalValue >= totalCost ? '+' : ''}{(totalValue - totalCost).toFixed(2)} ({(totalCost > 0 ? ((totalValue - totalCost)/totalCost)*100 : 0).toFixed(2)}%)
             </div>
           </div>
@@ -554,14 +565,16 @@ const WatchlistTab = ({ lang, handleAnalyze, session, watchlist, setWatchlist, s
   const [livePrices, setLivePrices] = useState({});
 
   useEffect(() => {
-    if (!watchlist) return;
+    if (!watchlist || watchlist.length === 0) return;
     const fetchPrices = async () => {
-      const prices = {};
-      for (const s of watchlist) {
-        const res = await getLivePrice(s);
-        if(res) prices[s] = res;
+      const { data } = await supabase.from('stock_analyses').select('symbol, last_price, change_pct').in('symbol', watchlist);
+      if (data) {
+        const prices = {};
+        data.forEach(row => {
+          prices[row.symbol] = { c: row.last_price, dp: row.change_pct };
+        });
+        setLivePrices(prices);
       }
-      setLivePrices(prices);
     };
     fetchPrices();
   }, [watchlist]);
@@ -574,7 +587,17 @@ const WatchlistTab = ({ lang, handleAnalyze, session, watchlist, setWatchlist, s
       const nw = [...watchlist, s];
       setWatchlist(nw);
       await supabase.from('watchlists').insert({ user_id: session.user.id, symbol: s });
-      getLivePrice(s).then(res => setLivePrices(p => ({...p, [s]: res})));
+      
+      const { data: cached } = await supabase.from('stock_analyses').select('last_price, change_pct').eq('symbol', s).single();
+      if (cached) {
+        setLivePrices(p => ({...p, [s]: { c: cached.last_price, dp: cached.change_pct }}));
+      } else {
+        const res = await getLivePrice(s);
+        if (res) {
+          await supabase.from('stock_analyses').upsert({ symbol: s, last_price: res.c, change_pct: res.dp });
+          setLivePrices(p => ({...p, [s]: res}));
+        }
+      }
     }
     setSymbol('');
   };
@@ -607,7 +630,7 @@ const WatchlistTab = ({ lang, handleAnalyze, session, watchlist, setWatchlist, s
             <div key={s} className="glass-card p-5 rounded-2xl flex flex-col justify-between hover:bg-slate-100/50 dark:hover:bg-slate-800/60 transition-colors group">
               <div className="flex justify-between items-start mb-4">
                 <div className="font-heading font-bold text-slate-800 dark:text-white text-2xl tracking-wide" dir="ltr">{s}</div>
-                <button onClick={() => handleRemove(s)} className="text-slate-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={18}/></button>
+                <button onClick={() => handleRemove(s)} className="text-slate-400 hover:text-accent-coral opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={18}/></button>
               </div>
               <div className="flex justify-between items-end">
                 <div>
@@ -616,7 +639,7 @@ const WatchlistTab = ({ lang, handleAnalyze, session, watchlist, setWatchlist, s
                 </div>
                 <div className="text-right">
                   {data && data.c && (
-                    <div className={`text-lg font-mono font-bold ${isPos?'text-emerald-500 dark:text-emerald-400 text-glow-emerald':'text-rose-500 dark:text-rose-400 text-glow-rose'}`} dir="ltr">
+                    <div className={`text-lg font-mono font-bold ${isPos?'text-navy-500 dark:text-accent-teal text-glow-accent':'text-accent-coral dark:text-accent-coral text-glow-coral'}`} dir="ltr">
                       {isPos?'+':''}{data.dp?.toFixed(2)}%
                     </div>
                   )}
@@ -639,11 +662,9 @@ const WatchlistTab = ({ lang, handleAnalyze, session, watchlist, setWatchlist, s
 export default function App() {
   const [session, setSession] = useState(null);
   
-  // New user defaults: English, Light mode
   const [lang, setLang] = useState('en');
   const [theme, setTheme] = useState('light');
 
-  // Apply theme class to document body
   useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
@@ -652,7 +673,6 @@ export default function App() {
     }
   }, [theme]);
 
-  // Tabs: 'chat', 'portfolio', 'watchlist', 'settings'
   const [activeTab, setActiveTab] = useState('chat');
 
   const [messages, setMessages] = useState([]);
@@ -824,6 +844,16 @@ export default function App() {
               price: quote.c 
             } : null
           };
+
+          // --- Caching Layer Upsert ---
+          if (quote && quote.c) {
+             await supabase.from('stock_analyses').upsert({
+               symbol: symbol,
+               last_price: quote.c,
+               change_pct: quote.dp,
+               analysis_json: cardData
+             });
+          }
         }
         
         setMessages(prev => [...prev, {
@@ -874,7 +904,7 @@ export default function App() {
   const NavItem = ({ id, icon: Icon, label }) => (
     <button 
       onClick={() => setActiveTab(id)}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === id ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'text-slate-500 hover:text-emerald-500 hover:bg-slate-100 dark:hover:bg-slate-800/50 dark:text-slate-400 dark:hover:text-emerald-400'}`}
+      className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === id ? 'bg-navy-500 text-white shadow-[0_0_15px_rgba(0,210,255,0.3)]' : 'text-slate-500 hover:text-navy-500 hover:bg-slate-100 dark:hover:bg-slate-800/50 dark:text-slate-400 dark:hover:text-accent-teal'}`}
     >
       <Icon size={20} />
       <span className="hidden md:inline">{label}</span>
@@ -882,11 +912,11 @@ export default function App() {
   );
 
   return (
-    <div className="flex h-screen cosmic-bg transition-colors duration-300" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="flex h-screen scibayan-bg transition-colors duration-300" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       {/* Sidebar Navigation */}
       <div className="w-16 md:w-64 glass-panel border-r border-slate-200 dark:border-white/5 flex flex-col shrink-0 z-20">
         <div className="h-20 flex items-center justify-center md:justify-start md:px-6 shrink-0 border-b border-slate-200 dark:border-white/5">
-          <BrainCircuit size={28} className="text-emerald-500 dark:text-emerald-400 drop-shadow-[0_0_10px_rgba(16,185,129,0.5)]"/>
+          <BrainCircuit size={28} className="text-navy-500 dark:text-accent-teal drop-shadow-[0_0_10px_rgba(0,210,255,0.5)]"/>
           <span className="hidden md:inline ml-3 font-heading font-black text-xl text-slate-800 dark:text-white tracking-tight">AlphaTrade</span>
         </div>
         
@@ -906,7 +936,7 @@ export default function App() {
               <Globe size={16} /> <span className="hidden md:inline">{lang === 'ar' ? 'EN' : 'AR'}</span>
             </button>
           </div>
-          <button onClick={() => supabase.auth.signOut()} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">
+          <button onClick={() => supabase.auth.signOut()} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-slate-500 hover:text-accent-coral hover:bg-rose-50 dark:hover:bg-accent-coral/10 transition-colors">
             <LogOut size={16} /> <span className="hidden md:inline">Logout</span>
           </button>
         </div>
@@ -922,7 +952,7 @@ export default function App() {
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
               {messages.map((msg, i) => (
                 <div key={i} className={`flex gap-4 max-w-4xl mx-auto ${msg.role === 'user' ? (lang === 'ar' ? 'flex-row-reverse' : 'flex-row-reverse') : ''}`}>
-                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-lg ${msg.role === 'user' ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white' : 'bg-white dark:bg-slate-800 border border-emerald-500/30 text-emerald-500 dark:text-emerald-400'}`}>
+                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-lg ${msg.role === 'user' ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white' : 'bg-white dark:bg-slate-800 border border-navy-500/30 text-navy-500 dark:text-accent-teal'}`}>
                     {msg.role === 'user' ? <User size={20} /> : <Bot size={20} />}
                   </div>
                   <div className={`flex flex-col gap-2 min-w-0 flex-1 ${msg.role === 'user' ? (lang === 'ar' ? 'items-start' : 'items-end') : 'items-start'}`}>
@@ -937,8 +967,8 @@ export default function App() {
               ))}
               {isLoading && (
                 <div className="flex gap-4 max-w-4xl mx-auto opacity-70">
-                  <div className="w-10 h-10 rounded-2xl bg-white dark:bg-slate-800 text-emerald-500 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/30"><Bot size={20} className="animate-pulse" /></div>
-                  <div className="text-sm p-5 glass-card text-emerald-600 dark:text-emerald-400 rounded-3xl rounded-tl-sm flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-white dark:bg-slate-800 text-navy-500 dark:text-accent-teal flex items-center justify-center border border-navy-500/30"><Bot size={20} className="animate-pulse" /></div>
+                  <div className="text-sm p-5 glass-card text-navy-600 dark:text-accent-teal rounded-3xl rounded-tl-sm flex items-center gap-3">
                     <RefreshCw size={16} className="animate-spin" /> <span className="font-medium tracking-wide">{loadingStatus}</span>
                   </div>
                 </div>
@@ -954,9 +984,9 @@ export default function App() {
                    onChange={(e) => setInput(e.target.value)}
                    onKeyDown={(e) => { if (e.key === 'Enter') handleSend(); }}
                    placeholder={T[lang].inputPlaceholder}
-                   className="w-full bg-slate-100/50 dark:bg-slate-950/50 border border-slate-300 dark:border-white/10 rounded-2xl px-6 py-4 text-base text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 pr-16 shadow-inner transition-all"
+                   className="w-full bg-slate-100/50 dark:bg-slate-950/50 border border-slate-300 dark:border-white/10 rounded-2xl px-6 py-4 text-base text-slate-800 dark:text-white focus:outline-none focus:border-navy-500/50 focus:ring-1 focus:ring-navy-500/50 pr-16 shadow-inner transition-all"
                  />
-                 <button onClick={() => handleSend()} disabled={isLoading} className={`absolute ${lang === 'ar' ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 p-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl disabled:opacity-50 transition-colors shadow-lg`}>
+                 <button onClick={() => handleSend()} disabled={isLoading} className={`absolute ${lang === 'ar' ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 p-3 bg-navy-600 hover:bg-navy-500 text-white rounded-xl disabled:opacity-50 transition-colors shadow-lg`}>
                    <Send size={20} className={lang === 'ar' ? 'rotate-180' : ''}/>
                  </button>
               </div>
@@ -980,15 +1010,15 @@ export default function App() {
           <div className="h-full flex items-center justify-center p-6 animate-in fade-in zoom-in-95 duration-300">
             <div className="glass-panel p-8 rounded-3xl max-w-md w-full">
               <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-heading font-bold text-slate-800 dark:text-white flex items-center gap-3"><Settings size={24} className="text-emerald-500" /> {T[lang].settings}</h2>
+                <h2 className="text-2xl font-heading font-bold text-slate-800 dark:text-white flex items-center gap-3"><Settings size={24} className="text-navy-500" /> {T[lang].settings}</h2>
               </div>
               <div className="space-y-6">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">{T[lang].apiKey}</label>
-                  <input type="password" value={geminiKey} onChange={(e) => { setGeminiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value); }} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500/50" dir="ltr" />
+                  <input type="password" value={geminiKey} onChange={(e) => { setGeminiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value); }} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:outline-none focus:border-navy-500/50" dir="ltr" />
                 </div>
                 <label className="flex items-center gap-4 cursor-pointer p-4 glass-card rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors">
-                  <input type="checkbox" checked={beginnerMode} onChange={(e) => handleSaveBeginnerMode(e.target.checked)} className="rounded bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-emerald-500 focus:ring-emerald-500/20 w-5 h-5" />
+                  <input type="checkbox" checked={beginnerMode} onChange={(e) => handleSaveBeginnerMode(e.target.checked)} className="rounded bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-navy-500 focus:ring-navy-500/20 w-5 h-5" />
                   <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{T[lang].beginnerMode}</span>
                 </label>
               </div>
