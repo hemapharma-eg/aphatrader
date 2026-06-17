@@ -509,7 +509,7 @@ export default function App() {
           - risks: (array of 2-4 strings, simple risks)
           - whatWouldChange: (array of 1-2 strings, what would change the verdict)
           - shariah: { compliant: boolean, reason: string, alternative: string } 
-            (Assess strictly on business model AND if debt/equity > 30% it's non-compliant).
+            (Assess strictly on business activity based on AAOIFI Shariah standards. Ignore raw totalDebtToEquityQuarterly metric. Flag extremely obvious high-debt or non-compliant business sectors like alcohol/banking/pork.)
           
           Ensure all strings are in ${lang === 'ar' ? 'Arabic' : 'English'}.
           NO markdown fences. Pure JSON.
@@ -557,15 +557,33 @@ export default function App() {
             52: quote && rawData.metric ? { low: rawData.metric['52WeekLow'], high: rawData.metric['52WeekHigh'], price: quote.c } : null
           };
         }
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: `Here is the analysis for ${symbol}:`,
+          decisionData: cardData
+        }]);
+      } else {
+        setLoadingStatus('Asking AI...');
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${geminiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            systemInstruction: { parts: [{ text: `You are an educational AI financial advisor. Answer the user's question in ${lang === 'ar' ? 'Arabic' : 'English'} simply and directly without markdown fences.` }] },
+          })
+        });
+
+        if (!res.ok) throw new Error('AI Error');
+        const aiDataRaw = await res.json();
+        const textResponse = aiDataRaw.candidates[0].content.parts[0].text;
+        
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: textResponse
+        }]);
       }
-
-      setMessages(prev => [...prev, {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: symbol ? `Here is the analysis for ${symbol}:` : "I couldn't detect a specific stock symbol in your request. Please ask about a specific ticker like AAPL.",
-        decisionData: cardData
-      }]);
-
     } catch (err) {
       setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: t.errorApi }]);
     } finally {
