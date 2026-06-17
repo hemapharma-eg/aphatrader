@@ -101,14 +101,14 @@ const fetchFMP = async (endpoint) => {
 };
 
 const getLivePrice = async (symbol) => {
-  const res = await fetchPolygon(`/v2/aggs/ticker/${symbol}/prev?adjusted=true`);
-  if (!res || !res.results || !res.results[0]) return null;
-  const data = res.results[0];
+  const res = await fetchFMP(`/profile?symbol=${symbol}`);
+  if (!res || !res[0]) return null;
+  const data = res[0];
   return {
-    c: data.c,
-    h: data.h,
-    l: data.l,
-    dp: data.o ? ((data.c - data.o) / data.o) * 100 : 0
+    c: data.price,
+    dp: data.changePercentage,
+    h: data.range ? parseFloat(data.range.split('-')[1]) : 0,
+    l: data.range ? parseFloat(data.range.split('-')[0]) : 0
   };
 };
 
@@ -779,8 +779,7 @@ export default function App() {
       let cardData = null;
       if (symbol) {
         setLoadingStatus(`Fetching ${symbol} data...`);
-        const [quote, profileRaw, metricsRaw, ratiosRaw, newsRaw] = await Promise.all([
-          getLivePrice(symbol),
+        const [profileRaw, metricsRaw, ratiosRaw, newsRaw] = await Promise.all([
           fetchFMP(`/profile?symbol=${symbol}`),
           fetchFMP(`/key-metrics-ttm?symbol=${symbol}`),
           fetchFMP(`/ratios-ttm?symbol=${symbol}`),
@@ -788,8 +787,15 @@ export default function App() {
         ]);
 
         const profile = profileRaw?.[0] || {};
-        const metrics = metricsRaw?.[0] || {};
-        const ratios = ratiosRaw?.[0] || {};
+        const quote = profile.price ? {
+            c: profile.price,
+            dp: profile.changePercentage,
+            h: profile.range ? parseFloat(profile.range.split('-')[1]) : 0,
+            l: profile.range ? parseFloat(profile.range.split('-')[0]) : 0,
+        } : null;
+        
+        const metrics = Array.isArray(metricsRaw) ? metricsRaw[0] : {};
+        const ratios = Array.isArray(ratiosRaw) ? ratiosRaw[0] : {};
         const news = newsRaw?.results || [];
 
         const rawData = { quote, profile, metrics, ratios, news };
