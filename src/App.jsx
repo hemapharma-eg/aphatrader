@@ -3,486 +3,424 @@ import {
   Send, BrainCircuit, TrendingUp, TrendingDown, Newspaper, 
   AlertCircle, Activity, Bot, User, Sparkles, CalendarDays, 
   LineChart as ChartIcon, Zap, Mic, MicOff, Volume2, Globe, Image as ImageIcon, X,
-  Settings, Briefcase, Plus, Trash2
+  Settings, Briefcase, Plus, Trash2, CheckCircle2, XCircle, MinusCircle, HelpCircle, RefreshCw, Eye
 } from 'lucide-react';
 
 // --- API Keys ---
+// TODO: Move Finnhub API key to environment variable or backend proxy before production.
+// WARNING: Leaving this hardcoded exposes it to client-side scraping.
 const FINNHUB_API_KEY = "d8pb0h9r01qgoi5hni8gd8pb0h9r01qgoi5hni90";
 const getStoredGeminiKey = () => localStorage.getItem('gemini_api_key') || '';
+const getBeginnerMode = () => localStorage.getItem('alpha_beginner_mode') !== 'false';
+const getWatchlist = () => JSON.parse(localStorage.getItem('alpha_watchlist') || '[]');
 
-// --- Translations Dictionary ---
+// --- Translations ---
 const T = {
   ar: {
     title: "ألفا تريد برو",
     subtitle: "مستشار الذكاء الاصطناعي",
-    welcome: "مرحباً! أنا ألفا تريد، مستشارك المالي. عقلي مدعوم بالذكاء الاصطناعي، وبياناتي متصلة مباشرة بسوق الأسهم الأمريكي عبر Finnhub. \n\nاسألني عن تحليل سهم معين، أو أحدث أخبار السوق، أو الاكتتابات القادمة. (يمكنك التحدث معي صوتياً أو إرفاق صور للتحليل!)",
-    capabilities: "القدرات المباشرة",
-    quotes: "أسعار الأسهم الحية",
-    news: "أخبار مالية فورية",
-    ipos: "جدول الاكتتابات (IPO)",
-    vision: "تحليل الرسوم البيانية",
-    active: "قنوات البيانات متصلة",
-    engine: "محرك التحليل",
-    source: "المصدر المباشر",
-    inputPlaceholder: "اسأل عن سهم (مثل AAPL)، أو أرفق صورة...",
-    disclaimer: "البيانات مقدمة كما هي من Finnhub. يرجى التحقق قبل الاستثمار.",
-    analyzing: "جاري تحليل طلبك وجلب البيانات...",
-    listening: "جاري الاستماع... تحدث الآن",
-    errorApi: "فشل الاتصال بالذكاء الاصطناعي. يرجى المحاولة مرة أخرى أو التأكد من مفتاح API.",
-    errorMic: "الميكروفون غير مدعوم في هذا المتصفح أو تم رفض الصلاحية.",
-    live: "مباشر",
-    today: "اليوم",
-    aiAnalysis: "تحليل الذكاء الاصطناعي",
-    newsTitle: "أخبار السوق المباشرة",
-    newsNote: "(الأخبار باللغة الإنجليزية من المصدر)",
-    ipoTitle: "الاكتتابات القادمة (30 يوماً)",
-    date: "التاريخ",
-    symbol: "الرمز",
-    company: "الشركة",
-    price: "السعر",
-    noIpo: "لا توجد اكتتابات كبرى مجدولة حالياً.",
-    prompts: ["حلل سهم تيسلا (TSLA)", "ما هي أحدث أخبار السوق؟", "هل هناك اكتتابات قادمة؟", "كيف هو أداء محفظتي اليوم؟"],
+    welcome: "مرحباً! أنا ألفا تريد. (لأغراض تعليمية فقط)\nاسألني عن أي سهم للتحليل.",
+    inputPlaceholder: "اسأل عن سهم (مثل AAPL)...",
+    disclaimer: "البيانات للاستخدام التعليمي فقط وليست نصيحة مالية مضمونة. قرار الاستثمار مسؤوليتك.",
     settings: "الإعدادات",
-    portfolio: "محفظتي",
+    portfolio: "المحفظة",
+    watchlist: "قائمة المراقبة",
     apiKey: "مفتاح Gemini API",
+    beginnerMode: "وضع المبتدئين (تبسيط المصطلحات)",
     save: "حفظ",
-    addStock: "إضافة سهم",
+    addStock: "إضافة",
     qty: "الكمية",
     buyPrice: "سعر الشراء",
     currentPrice: "السعر الحالي",
     pnl: "الربح/الخسارة",
     action: "إجراء",
-    requireKey: "يرجى إدخال مفتاح Gemini API في الإعدادات للمتابعة.",
-    close: "إغلاق",
-    totalValue: "القيمة الإجمالية"
+    totalValue: "القيمة الإجمالية",
+    analyzing: "جاري التحليل...",
+    errorApi: "فشل الاتصال بالذكاء الاصطناعي.",
+    live: "مباشر",
+    today: "اليوم",
+    newsTitle: "أخبار السوق",
+    ipoTitle: "اكتتابات قادمة",
+    refreshAnalysis: "تحديث التحليل",
+    analyze: "تحليل",
+    movePort: "نقل للمحفظة",
+    addToWatchlist: "أضف للمراقبة",
+    decisionChecklist: "قائمة التحقق للمبتدئين",
+    buyChecklist: ["هل الاتجاه العام إيجابي؟", "هل هذا السهم يركز محفظتك بشدة؟", "هل الأخبار خالية من الكوارث؟", "هل مستوى المخاطرة مقبول؟", "هل السهم متوافق شرعياً؟", "هل لديك خطة لوقف الخسارة؟"],
+    sellChecklist: ["هل تغير سبب الشراء الأساسي؟", "هل الخسارة تجاوزت حدك الأقصى؟", "هل تبيع بناءً على منطق وليس ذعر؟", "هل الأخبار تزداد سوءاً؟"]
   },
   en: {
     title: "AlphaTrade Pro",
     subtitle: "AI Consultant",
-    welcome: "Hello! I am AlphaTrade. My AI brain is powered by Gemini, and my real-time data is hardwired directly to Finnhub.io. \n\nAsk me to analyze a specific stock symbol, fetch the latest market news, or show upcoming IPOs. (You can also use voice chat or upload images for analysis!)",
-    capabilities: "Live Capabilities",
-    quotes: "Real-time Quotes",
-    news: "Live Financial News",
-    ipos: "IPO Calendar Data",
-    vision: "Chart & Image Analysis",
-    active: "Data Pipelines Active",
-    engine: "Analysis Engine",
-    source: "Live Quotes",
-    inputPlaceholder: "Ask for stock analysis, or upload an image...",
-    disclaimer: "Data provided 'as is' by Finnhub API. Verify before investing.",
-    analyzing: "Analyzing request & fetching live API...",
-    listening: "Listening... Speak now",
-    errorApi: "AI connection failed. Please try again or check your API key.",
-    errorMic: "Microphone not supported in this browser or permission denied.",
-    live: "Live",
-    today: "Today",
-    aiAnalysis: "AI Analysis",
-    newsTitle: "Live Market Intelligence",
-    newsNote: "",
-    ipoTitle: "Upcoming IPOs (30 Days)",
-    date: "Date",
-    symbol: "Symbol",
-    company: "Company",
-    price: "Price",
-    noIpo: "No major IPOs scheduled at this time.",
-    prompts: ["Analyze TSLA stock today", "Show me the latest market news", "Any upcoming IPOs?", "How is my portfolio performing?"],
+    welcome: "Hello! I am AlphaTrade. (Educational use only)\nAsk me to analyze any stock.",
+    inputPlaceholder: "Ask for stock analysis...",
+    disclaimer: "Data provided for educational purposes, not guaranteed financial advice. You decide.",
     settings: "Settings",
-    portfolio: "My Portfolio",
+    portfolio: "Portfolio",
+    watchlist: "Watchlist",
     apiKey: "Gemini API Key",
+    beginnerMode: "Beginner Mode (Explain jargon)",
     save: "Save",
     addStock: "Add Stock",
-    qty: "Quantity",
+    qty: "Qty",
     buyPrice: "Buy Price",
     currentPrice: "Current Price",
     pnl: "P&L",
     action: "Action",
-    requireKey: "Please enter your Gemini API Key in settings to continue.",
-    close: "Close",
-    totalValue: "Total Value"
+    totalValue: "Total Value",
+    analyzing: "Analyzing...",
+    errorApi: "AI connection failed.",
+    live: "Live",
+    today: "Today",
+    newsTitle: "Live News",
+    ipoTitle: "Upcoming IPOs",
+    refreshAnalysis: "Refresh Analysis",
+    analyze: "Analyze",
+    movePort: "To Portfolio",
+    addToWatchlist: "Add to Watchlist",
+    decisionChecklist: "Decision Checklist",
+    buyChecklist: ["Is the trend positive?", "Is it not over-concentrating your portfolio?", "Is the news clear of disasters?", "Is the risk acceptable?", "Is it Shariah compliant?", "Do you have a stop-loss plan?"],
+    sellChecklist: ["Did your original thesis change?", "Is the loss beyond your limit?", "Are you selling on logic, not panic?", "Is the outlook worsening?"]
   }
 };
 
-// --- API Utility (Finnhub) ---
+// --- Utilities ---
 const fetchFinnhub = async (endpoint) => {
-  const url = `https://finnhub.io/api/v1${endpoint}&token=${FINNHUB_API_KEY}`;
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`Finnhub API Error: ${response.status}`);
-  return await response.json();
+  try {
+    const url = `https://finnhub.io/api/v1${endpoint}&token=${FINNHUB_API_KEY}`;
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    return await response.json();
+  } catch(e) { return null; }
 };
 
-// --- Helper Components ---
-const SimpleLineChart = ({ data, color }) => {
-  if (!data || data.length === 0) return null;
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const range = max - min || 1; 
-  
-  const points = data.map((val, i) => {
-    const x = (i / (data.length - 1)) * 100;
-    const y = 100 - (((val - min) / range) * 100);
-    return `${x},${y}`;
-  }).join(' ');
+const daysAgo = (days) => {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d.toISOString().split('T')[0];
+};
 
+const detectStockSymbol = (text) => {
+  const match = text.match(/\b([A-Z]{1,5})\b/);
+  if (match) return match[1];
+  const map = {
+    'apple': 'AAPL', 'أبل': 'AAPL', 'tesla': 'TSLA', 'تسلا': 'TSLA',
+    'microsoft': 'MSFT', 'مايكروسوفت': 'MSFT', 'nvidia': 'NVDA', 'نفيديا': 'NVDA',
+    'amazon': 'AMZN', 'أمازون': 'AMZN', 'meta': 'META', 'ميتا': 'META',
+    'alphabet': 'GOOGL', 'google': 'GOOGL', 'جوجل': 'GOOGL', 'amd': 'AMD',
+    'palantir': 'PLTR'
+  };
+  const lower = text.toLowerCase();
+  for (const [key, val] of Object.entries(map)) {
+    if (lower.includes(key)) return val;
+  }
+  return null;
+};
+
+// --- Scoring Logic ---
+const computeSignals = (data) => {
+  let signals = {
+    analyst: { score: 0, state: 'neutral', value: 'Unavailable', explanation: 'Analyst data missing.' },
+    earnings: { score: 0, state: 'neutral', value: 'Unavailable', explanation: 'Earnings data missing.' },
+    valuation: { score: 0, state: 'neutral', value: 'Unavailable', explanation: 'P/E data missing.' },
+    pricePosition: { score: 0, state: 'neutral', value: 'Unavailable', explanation: '52w range missing.' },
+    newsSentiment: { score: 0, state: 'neutral', value: 'Waiting...', explanation: '' } 
+  };
+
+  if (data.recommendation && data.recommendation.length > 0) {
+    const rec = data.recommendation[0];
+    const bulls = (rec.strongBuy || 0) + (rec.buy || 0);
+    const bears = (rec.sell || 0) + (rec.strongSell || 0);
+    if (bulls > bears) signals.analyst = { score: 1, state: 'bullish', value: `${bulls} Buy vs ${bears} Sell`, explanation: 'More analysts say buy.' };
+    else if (bears > bulls) signals.analyst = { score: -1, state: 'bearish', value: `${bears} Sell vs ${bulls} Buy`, explanation: 'More analysts say sell.' };
+    else signals.analyst = { score: 0, state: 'neutral', value: `Mixed (${bulls}/${bears})`, explanation: 'Analysts are divided.' };
+  }
+
+  if (data.earnings && data.earnings.length > 0) {
+    let beats = 0, misses = 0;
+    data.earnings.forEach(e => { if(e.actual > e.estimate) beats++; else if (e.actual < e.estimate) misses++; });
+    if (beats > misses) signals.earnings = { score: 1, state: 'bullish', value: `${beats} Beats, ${misses} Misses`, explanation: 'Company frequently beats targets.' };
+    else if (misses > beats) signals.earnings = { score: -1, state: 'bearish', value: `${misses} Misses, ${beats} Beats`, explanation: 'Company frequently misses targets.' };
+    else signals.earnings = { score: 0, state: 'neutral', value: `Mixed (${beats}/${misses})`, explanation: 'Mixed track record.' };
+  }
+
+  if (data.metric) {
+    const pe = data.metric.peExclExtraTTM || data.metric.peBasicExclExtraTTM;
+    if (pe) {
+      if (pe < 15) signals.valuation = { score: 1, state: 'bullish', value: `P/E ${pe.toFixed(1)}`, explanation: 'Value is considered cheap.' };
+      else if (pe > 25) signals.valuation = { score: -1, state: 'bearish', value: `P/E ${pe.toFixed(1)}`, explanation: 'Value is considered expensive.' };
+      else signals.valuation = { score: 0, state: 'neutral', value: `P/E ${pe.toFixed(1)}`, explanation: 'Value is considered fair.' };
+    }
+    
+    const high = data.metric['52WeekHigh'];
+    const low = data.metric['52WeekLow'];
+    if (data.quote && high && low) {
+      const p = data.quote.c;
+      const range = high - low;
+      if (range > 0) {
+        const pct = (p - low) / range;
+        if (pct <= 0.3) signals.pricePosition = { score: 1, state: 'bullish', value: 'Near 52w Low', explanation: 'Price is low compared to last year.' };
+        else if (pct >= 0.7) signals.pricePosition = { score: -1, state: 'bearish', value: 'Near 52w High', explanation: 'Price is high compared to last year.' };
+        else signals.pricePosition = { score: 0, state: 'neutral', value: 'Mid 52w Range', explanation: 'Price is in middle of its annual range.' };
+      }
+    }
+  }
+
+  return signals;
+};
+
+const getVerdict = (signals) => {
+  let score = 0;
+  let counts = { 1:0, '-1':0, 0:0 };
+  Object.values(signals).forEach(s => {
+    score += s.score;
+    counts[s.score]++;
+  });
+
+  const maxAgreed = Math.max(counts[1], counts['-1'], counts[0]);
+  let confidence = 'Low';
+  if (maxAgreed >= 4) confidence = 'High';
+  else if (maxAgreed === 3) confidence = 'Medium';
+
+  let verdict = 'HOLD';
+  if (score >= 3) verdict = 'BUY';
+  else if (score >= 1) verdict = 'WATCH';
+  else if (score <= -3) verdict = 'SELL';
+  else if (score <= -1) verdict = 'AVOID';
+
+  return { verdict, confidence, score };
+};
+
+// --- Components ---
+const Tooltip = ({ term, beginnerMode, explanation, children }) => {
+  if (!beginnerMode) return <span>{children}</span>;
   return (
-    <svg className="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100">
-      <polyline points={points} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-      <polygon points={`0,100 ${points} 100,100`} fill={color} opacity="0.15" />
-    </svg>
+    <span className="group relative cursor-help inline-block border-b border-dashed border-slate-500/50">
+      {children}
+      <span className="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-2 w-48 text-xs bg-slate-800 text-slate-200 rounded-lg shadow-xl border border-slate-700 z-[100] text-center font-normal">
+        <span className="font-bold text-emerald-400 block mb-1">{term}</span>
+        {explanation}
+      </span>
+    </span>
   );
 };
 
-// --- Settings Modal ---
-const SettingsModal = ({ isOpen, onClose, lang, geminiKey, setGeminiKey }) => {
+const DecisionChecklist = ({ type, lang }) => {
   const t = T[lang];
-  const [localKey, setLocalKey] = useState(geminiKey);
-
-  useEffect(() => {
-    setLocalKey(geminiKey);
-  }, [geminiKey, isOpen]);
-
-  if (!isOpen) return null;
-
-  const handleSave = () => {
-    setGeminiKey(localKey);
-    localStorage.setItem('gemini_api_key', localKey);
-    onClose();
-  };
+  const list = type === 'BUY' ? t.buyChecklist : type === 'SELL' ? t.sellChecklist : [];
+  const [checks, setChecks] = useState(list.map(() => false));
+  
+  if (list.length === 0) return null;
+  const allChecked = checks.every(c => c);
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex justify-center items-center p-4" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      <div className="bg-slate-900 border border-slate-700 p-6 rounded-2xl max-w-md w-full shadow-xl">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2"><Settings size={20} className="text-emerald-500" /> {t.settings}</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={20} /></button>
-        </div>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">{t.apiKey}</label>
+    <div className="mt-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+      <h4 className="font-bold text-slate-200 mb-3 flex items-center gap-2 text-sm">
+        <AlertCircle size={16} className="text-blue-400" /> {t.decisionChecklist} ({type})
+      </h4>
+      <div className="space-y-2">
+        {list.map((item, i) => (
+          <label key={i} className="flex items-start gap-3 cursor-pointer group">
             <input 
-              type="password" 
-              value={localKey} 
-              onChange={(e) => setLocalKey(e.target.value)}
-              placeholder="AIzaSy..." 
-              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500"
-              dir="ltr"
+              type="checkbox" 
+              checked={checks[i]} 
+              onChange={() => {
+                const n = [...checks];
+                n[i] = !n[i];
+                setChecks(n);
+              }}
+              className="mt-0.5 rounded bg-slate-900 border-slate-600 text-blue-500 focus:ring-blue-500/20"
+            />
+            <span className={`text-sm ${checks[i] ? 'text-slate-400 line-through' : 'text-slate-300 group-hover:text-white'}`}>{item}</span>
+          </label>
+        ))}
+      </div>
+      {allChecked && <div className="mt-3 text-xs font-bold text-emerald-400 flex items-center gap-1"><CheckCircle2 size={12}/> Ready!</div>}
+    </div>
+  );
+};
+
+const DecisionWidget = ({ data, lang, beginnerMode }) => {
+  if (!data) return null;
+  const { verdict, confidence, fiveSignals, summary, risks, whatWouldChange, shariah, 52: range52 } = data;
+  
+  const colors = {
+    BUY: 'bg-emerald-500 text-white',
+    HOLD: 'bg-blue-500 text-white',
+    SELL: 'bg-rose-500 text-white',
+    WATCH: 'bg-amber-500 text-white',
+    AVOID: 'bg-red-700 text-white',
+  };
+  
+  const confColor = confidence === 'High' ? 'text-emerald-400' : confidence === 'Medium' ? 'text-amber-400' : 'text-rose-400';
+
+  return (
+    <div className="mt-4 bg-slate-900 border border-slate-700 rounded-2xl p-5 max-w-md w-full shadow-lg" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <div className="flex justify-between items-start mb-4">
+        <div className={`px-4 py-2 rounded-lg font-black tracking-widest text-xl ${colors[verdict] || 'bg-slate-700'}`}>
+          {verdict}
+        </div>
+        <div className="text-right">
+          <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Confidence</div>
+          <div className={`font-bold ${confColor}`}>{confidence}</div>
+        </div>
+      </div>
+      
+      <p className="text-slate-200 font-medium leading-relaxed mb-6 bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
+        {summary}
+      </p>
+
+      {/* 52 Week Bar */}
+      {range52 && range52.high && range52.low && (
+        <div className="mb-6">
+          <div className="flex justify-between text-xs text-slate-500 mb-1 font-mono">
+            <Tooltip term="52w Low" beginnerMode={beginnerMode} explanation="Lowest price in the last year">${range52.low.toFixed(2)}</Tooltip>
+            <Tooltip term="52w High" beginnerMode={beginnerMode} explanation="Highest price in the last year">${range52.high.toFixed(2)}</Tooltip>
+          </div>
+          <div className="relative h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div 
+              className="absolute top-0 bottom-0 w-2 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.8)] z-10" 
+              style={{ left: `${Math.max(0, Math.min(100, ((range52.price - range52.low)/(range52.high - range52.low))*100))}%` }}
             />
           </div>
-          <button 
-            onClick={handleSave}
-            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg transition-colors"
-          >
-            {t.save}
-          </button>
+          <div className="text-center text-xs text-slate-400 mt-1 font-mono font-bold">${range52.price?.toFixed(2)}</div>
         </div>
+      )}
+
+      {/* Signals */}
+      <div className="space-y-3 mb-6">
+        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+          5 Independent Signals
+          {beginnerMode && <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Beginner Mode ON</span>}
+        </h4>
+        {Object.entries(fiveSignals).map(([key, sig]) => (
+          <div key={key} className="flex items-start gap-3 bg-slate-950 p-3 rounded-xl border border-slate-800/50">
+            <div className="mt-0.5">
+              {sig.state === 'bullish' ? <CheckCircle2 size={16} className="text-emerald-500" /> : 
+               sig.state === 'bearish' ? <XCircle size={16} className="text-rose-500" /> : 
+               <MinusCircle size={16} className="text-slate-500" />}
+            </div>
+            <div>
+              <div className="text-sm font-bold text-slate-300 capitalize">
+                <Tooltip term={key.replace(/([A-Z])/g, ' $1').trim()} beginnerMode={beginnerMode} explanation={sig.explanation}>
+                  {key.replace(/([A-Z])/g, ' $1').trim()}
+                </Tooltip>
+              </div>
+              <div className="text-xs text-slate-400 mt-0.5">{beginnerMode ? sig.explanation : sig.value}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Shariah Note */}
+      {shariah && (
+        <div className={`mb-6 p-3 rounded-xl border text-sm ${shariah.compliant ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}`}>
+          <div className="font-bold mb-1 flex items-center gap-1">
+            <Globe size={14}/> {shariah.compliant ? 'Shariah Compliant' : 'Not Shariah Compliant'}
+          </div>
+          <p className="text-xs text-slate-300 mb-2">{shariah.reason}</p>
+          {!shariah.compliant && shariah.alternative && (
+            <div className="text-xs">Alternative: <strong className="text-white">{shariah.alternative}</strong></div>
+          )}
+        </div>
+      )}
+
+      {/* Risks & Changes */}
+      <div className="space-y-4 mb-4">
+        <div>
+          <h4 className="text-xs font-bold text-rose-400 uppercase tracking-wider mb-1">Key Risks</h4>
+          <ul className="list-disc list-inside text-xs text-slate-300 space-y-1">
+            {risks?.map((r, i) => <li key={i}>{r}</li>)}
+          </ul>
+        </div>
+        <div>
+          <h4 className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-1">What would change this?</h4>
+          <ul className="list-disc list-inside text-xs text-slate-300 space-y-1">
+            {whatWouldChange?.map((c, i) => <li key={i}>{c}</li>)}
+          </ul>
+        </div>
+      </div>
+      
+      <DecisionChecklist type={verdict} lang={lang} />
+
+      <div className="mt-4 pt-4 border-t border-slate-800 text-[10px] text-slate-500 text-center flex items-center justify-center gap-1">
+        <AlertCircle size={12}/> Educational use only. Not financial advice. You decide.
       </div>
     </div>
   );
 };
 
-// --- Portfolio Modal ---
-const PortfolioModal = ({ isOpen, onClose, lang, portfolio, setPortfolio }) => {
-  const [symbol, setSymbol] = useState('');
-  const [qty, setQty] = useState('');
-  const [price, setPrice] = useState('');
-  const [livePrices, setLivePrices] = useState({});
-  const [loading, setLoading] = useState(false);
+const WatchlistModal = ({ isOpen, onClose, lang, handleAnalyze }) => {
   const t = T[lang];
+  const [watchlist, setWatchlist] = useState(getWatchlist());
+  const [symbol, setSymbol] = useState('');
+  const [livePrices, setLivePrices] = useState({});
 
   useEffect(() => {
     if (!isOpen) return;
     const fetchPrices = async () => {
-      setLoading(true);
       const prices = {};
-      for (const item of portfolio) {
-        try {
-          const res = await fetchFinnhub(`/quote?symbol=${item.symbol}`);
-          prices[item.symbol] = res.c;
-        } catch (e) {
-          console.error("Failed to fetch quote for", item.symbol);
-        }
+      for (const s of watchlist) {
+        const res = await fetchFinnhub(`/quote?symbol=${s}`);
+        if(res) prices[s] = res;
       }
       setLivePrices(prices);
-      setLoading(false);
     };
     fetchPrices();
-  }, [isOpen, portfolio]);
+  }, [isOpen, watchlist]);
 
   if (!isOpen) return null;
 
   const handleAdd = () => {
-    if (!symbol || !qty || !price) return;
-    const newItem = { symbol: symbol.toUpperCase(), qty: parseFloat(qty), buyPrice: parseFloat(price) };
-    const updated = [...portfolio, newItem];
-    setPortfolio(updated);
-    localStorage.setItem('alpha_portfolio', JSON.stringify(updated));
-    setSymbol(''); setQty(''); setPrice('');
-    
-    // Fetch live price for the new item
-    fetchFinnhub(`/quote?symbol=${newItem.symbol}`).then(res => {
-      setLivePrices(prev => ({...prev, [newItem.symbol]: res.c}));
-    }).catch(e => console.error(e));
+    if (!symbol) return;
+    const s = symbol.toUpperCase();
+    if (!watchlist.includes(s)) {
+      const nw = [...watchlist, s];
+      setWatchlist(nw);
+      localStorage.setItem('alpha_watchlist', JSON.stringify(nw));
+      fetchFinnhub(`/quote?symbol=${s}`).then(res => setLivePrices(p => ({...p, [s]: res})));
+    }
+    setSymbol('');
   };
 
-  const handleRemove = (index) => {
-    const updated = portfolio.filter((_, i) => i !== index);
-    setPortfolio(updated);
-    localStorage.setItem('alpha_portfolio', JSON.stringify(updated));
+  const handleRemove = (s) => {
+    const nw = watchlist.filter(x => x !== s);
+    setWatchlist(nw);
+    localStorage.setItem('alpha_watchlist', JSON.stringify(nw));
   };
-
-  let totalValue = 0;
-  let totalCost = 0;
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex justify-center items-center p-4" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      <div className="bg-slate-900 border border-slate-700 p-6 rounded-2xl max-w-3xl w-full shadow-xl max-h-[85vh] overflow-y-auto">
+      <div className="bg-slate-900 border border-slate-700 p-6 rounded-2xl max-w-lg w-full shadow-xl">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2"><Briefcase size={20} className="text-emerald-500" /> {t.portfolio}</h2>
+          <h2 className="text-xl font-bold text-white flex items-center gap-2"><Eye size={20} className="text-blue-500" /> {t.watchlist}</h2>
           <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={20} /></button>
         </div>
 
-        {/* Add New Stock */}
-        <div className="flex flex-wrap gap-3 mb-6 bg-slate-800/50 p-4 rounded-xl border border-slate-700">
-          <div className="flex-1 min-w-[100px]">
-            <label className="block text-xs text-slate-400 mb-1">{t.symbol}</label>
-            <input type="text" value={symbol} onChange={e => setSymbol(e.target.value)} placeholder="AAPL" className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500" dir="ltr" />
-          </div>
-          <div className="flex-1 min-w-[100px]">
-            <label className="block text-xs text-slate-400 mb-1">{t.qty}</label>
-            <input type="number" value={qty} onChange={e => setQty(e.target.value)} placeholder="10" className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500" dir="ltr" />
-          </div>
-          <div className="flex-1 min-w-[100px]">
-            <label className="block text-xs text-slate-400 mb-1">{t.buyPrice}</label>
-            <input type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="150.50" className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500" dir="ltr" />
-          </div>
-          <div className="flex items-end">
-            <button onClick={handleAdd} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2 h-[42px]">
-              <Plus size={16} /> <span className="hidden sm:inline">{t.addStock}</span>
-            </button>
-          </div>
+        <div className="flex gap-2 mb-4">
+          <input type="text" value={symbol} onChange={e=>setSymbol(e.target.value)} placeholder="AAPL" className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white uppercase" dir="ltr"/>
+          <button onClick={handleAdd} className="bg-blue-600 hover:bg-blue-500 text-white px-4 rounded-lg font-bold">Add</button>
         </div>
 
-        {/* Portfolio List */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left text-slate-300" style={{ textAlign: lang === 'ar' ? 'right' : 'left' }}>
-            <thead className="text-xs text-slate-500 uppercase bg-slate-800/50 border-b border-slate-700">
-              <tr>
-                <th className="px-4 py-3">{t.symbol}</th>
-                <th className="px-4 py-3">{t.qty}</th>
-                <th className="px-4 py-3">{t.buyPrice}</th>
-                <th className="px-4 py-3">{t.currentPrice}</th>
-                <th className="px-4 py-3">{t.pnl}</th>
-                <th className="px-4 py-3 text-center">{t.action}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {portfolio.length === 0 && (
-                <tr><td colSpan="6" className="px-4 py-4 text-center text-slate-500">لا توجد أسهم / No stocks</td></tr>
-              )}
-              {portfolio.map((item, i) => {
-                const livePrice = livePrices[item.symbol];
-                const cost = item.qty * item.buyPrice;
-                let val = 0;
-                let pnl = 0;
-                let pnlPercent = 0;
-                if (livePrice) {
-                  val = item.qty * livePrice;
-                  pnl = val - cost;
-                  pnlPercent = (pnl / cost) * 100;
-                  totalValue += val;
-                } else {
-                  totalValue += cost; // fallback
-                }
-                totalCost += cost;
-                
-                const isPositive = pnl >= 0;
-
-                return (
-                  <tr key={i} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
-                    <td className="px-4 py-3 font-mono font-bold text-white" dir="ltr">{item.symbol}</td>
-                    <td className="px-4 py-3" dir="ltr">{item.qty}</td>
-                    <td className="px-4 py-3" dir="ltr">${item.buyPrice.toFixed(2)}</td>
-                    <td className="px-4 py-3" dir="ltr">
-                      {livePrice ? `$${livePrice.toFixed(2)}` : (loading ? '...' : '-')}
-                    </td>
-                    <td className={`px-4 py-3 font-bold ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`} dir="ltr">
-                      {livePrice ? `${isPositive ? '+' : ''}$${pnl.toFixed(2)} (${pnlPercent.toFixed(2)}%)` : '-'}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <button onClick={() => handleRemove(i)} className="text-slate-500 hover:text-rose-400 p-1">
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-            {portfolio.length > 0 && (
-              <tfoot className="border-t border-slate-700 bg-slate-900/50 font-bold text-white">
-                <tr>
-                  <td colSpan="3" className="px-4 py-3 text-right">{t.totalValue}</td>
-                  <td colSpan="3" className="px-4 py-3" dir="ltr">${totalValue.toFixed(2)}</td>
-                </tr>
-              </tfoot>
-            )}
-          </table>
+        <div className="space-y-2 max-h-64 overflow-y-auto">
+          {watchlist.map(s => {
+            const data = livePrices[s];
+            const isPos = data?.dp >= 0;
+            return (
+              <div key={s} className="flex justify-between items-center bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+                <div>
+                  <span className="font-bold text-white text-lg mr-2" dir="ltr">{s}</span>
+                  {data && <span className="text-slate-300">${data.c?.toFixed(2)}</span>}
+                </div>
+                <div className="flex items-center gap-3">
+                  {data && <span className={`text-sm font-bold ${isPos?'text-emerald-400':'text-rose-400'}`} dir="ltr">{isPos?'+':''}{data.dp?.toFixed(2)}%</span>}
+                  <button onClick={() => { handleAnalyze(s); onClose(); }} className="text-xs bg-slate-700 hover:bg-emerald-600 px-2 py-1 rounded text-white">{t.analyze}</button>
+                  <button onClick={() => handleRemove(s)} className="text-slate-500 hover:text-rose-400"><Trash2 size={16}/></button>
+                </div>
+              </div>
+            );
+          })}
         </div>
-      </div>
-    </div>
-  );
-};
-
-
-// --- Live Finnhub Widgets ---
-const StockWidget = ({ symbol, insight, lang }) => {
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
-  const t = T[lang];
-
-  useEffect(() => {
-    const loadStock = async () => {
-      try {
-        const quote = await fetchFinnhub(`/quote?symbol=${symbol}`);
-        const to = Math.floor(Date.now() / 1000);
-        const from = to - (30 * 24 * 60 * 60);
-        const candles = await fetchFinnhub(`/stock/candle?symbol=${symbol}&resolution=D&from=${from}&to=${to}`);
-        
-        let history = candles.s === 'ok' && candles.c ? candles.c : Array(30).fill(quote.c || 0);
-        setData({ price: quote.c, change: quote.dp, changeAbs: quote.d, history });
-      } catch (err) {
-        setError(lang === 'ar' ? "فشل جلب البيانات المباشرة." : "Failed to fetch live data.");
-      }
-    };
-    loadStock();
-  }, [symbol, lang]);
-
-  if (error) return <div className="mt-4 p-4 text-rose-400 bg-rose-500/10 rounded-xl text-sm border border-rose-500/20">{error}</div>;
-  if (!data) return (
-    <div className="mt-4 bg-slate-900 border border-slate-700 rounded-2xl p-5 max-w-sm w-full animate-pulse flex flex-col gap-4">
-      <div className="h-6 bg-slate-800 rounded w-1/3"></div>
-      <div className="h-10 bg-slate-800 rounded w-1/2"></div>
-      <div className="h-16 bg-slate-800 rounded w-full"></div>
-    </div>
-  );
-
-  const isPositive = data.change >= 0;
-
-  return (
-    <div className="mt-4 bg-slate-900 border border-slate-700 rounded-2xl p-5 max-w-sm w-full shadow-lg" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex items-center gap-2">
-          <h3 className="font-black text-white text-2xl tracking-tight uppercase">{symbol}</h3>
-          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 uppercase tracking-wider flex items-center gap-1">
-            <Zap size={10} /> {t.live}
-          </span>
-        </div>
-        <div className={`px-2 py-1 rounded-md text-sm font-bold flex items-center gap-1 ${isPositive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
-          <span dir="ltr">{data.change?.toFixed(2)}%</span>
-          {isPositive ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-        </div>
-      </div>
-      <div className="text-4xl font-black text-white mb-1">
-        ${data.price?.toFixed(2)}
-      </div>
-      <div className={`text-sm font-medium mb-4 flex gap-1 items-center ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
-        <span dir="ltr">{isPositive ? '+' : ''}{data.changeAbs?.toFixed(2)}</span> <span>{t.today}</span>
-      </div>
-      <div className="h-20 w-full mb-4" dir="ltr">
-        <SimpleLineChart data={data.history} color={isPositive ? '#10b981' : '#f43f5e'} />
-      </div>
-      {insight && (
-        <div className="p-3 bg-slate-800/80 rounded-xl text-sm text-slate-300 border border-slate-700">
-          <span className="font-bold text-emerald-400 flex items-center gap-1 mb-1">
-            <Sparkles size={14} /> {t.aiAnalysis}
-          </span>
-          <p className="leading-relaxed">{insight}</p>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const NewsWidget = ({ lang }) => {
-  const [news, setNews] = useState(null);
-  const t = T[lang];
-  
-  useEffect(() => {
-    fetchFinnhub('/news?category=general')
-      .then(res => setNews(res.slice(0, 4)))
-      .catch(() => setNews([]));
-  }, []);
-
-  if (!news) return <div className="mt-4 p-4 text-emerald-400 text-sm">Fetching...</div>;
-
-  return (
-    <div className="mt-4 bg-slate-900 border border-slate-700 rounded-2xl p-5 max-w-2xl w-full shadow-lg" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="font-bold text-white flex items-center gap-2">
-          <Newspaper className="text-emerald-500" size={18} /> {t.newsTitle}
-        </h3>
-        {t.newsNote && <span className="text-[10px] text-slate-500">{t.newsNote}</span>}
-      </div>
-      <div className="space-y-4">
-        {news.map((item, idx) => (
-          <a key={idx} href={item.url} target="_blank" rel="noreferrer" className="block border-b border-slate-800 pb-3 last:border-0 last:pb-0 group">
-            <p className="text-slate-200 text-sm font-medium leading-relaxed group-hover:text-emerald-400 transition-colors line-clamp-2" dir="ltr" style={{ textAlign: lang === 'ar' ? 'right' : 'left' }}>
-              {item.headline}
-            </p>
-            <div className="text-xs text-slate-500 mt-2 flex gap-3 font-medium uppercase tracking-wider">
-              <span className="text-emerald-400/80">{item.source}</span>
-              <span>•</span>
-              <span>{new Date(item.datetime * 1000).toLocaleString([], {hour: '2-digit', minute:'2-digit'})}</span>
-            </div>
-          </a>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const IpoWidget = ({ lang }) => {
-  const [ipos, setIpos] = useState(null);
-  const t = T[lang];
-
-  useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    const nextMonth = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    
-    fetchFinnhub(`/calendar/ipo?from=${today}&to=${nextMonth}`)
-      .then(res => setIpos(res.ipoCalendar?.slice(0, 5) || []))
-      .catch(() => setIpos([]));
-  }, []);
-
-  if (!ipos) return <div className="mt-4 p-4 text-emerald-400 text-sm">Fetching...</div>;
-
-  return (
-    <div className="mt-4 bg-slate-900 border border-slate-700 rounded-2xl p-5 max-w-2xl w-full shadow-lg overflow-hidden" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      <h3 className="font-bold text-white mb-4 flex items-center gap-2">
-        <CalendarDays className="text-emerald-500" size={18} /> {t.ipoTitle}
-      </h3>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm text-slate-300" style={{ textAlign: lang === 'ar' ? 'right' : 'left' }}>
-          <thead className="text-xs text-slate-500 uppercase bg-slate-800/50 border-b border-slate-700">
-            <tr>
-              <th className="px-4 py-3">{t.date}</th>
-              <th className="px-4 py-3">{t.symbol}</th>
-              <th className="px-4 py-3">{t.company}</th>
-              <th className="px-4 py-3">{t.price}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {ipos.length === 0 && (
-              <tr><td colSpan="4" className="px-4 py-4 text-center text-slate-500">{t.noIpo}</td></tr>
-            )}
-            {ipos.map((ipo, i) => (
-              <tr key={i} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
-                <td className="px-4 py-3 text-emerald-400 whitespace-nowrap" dir="ltr">{ipo.date}</td>
-                <td className="px-4 py-3 font-mono font-bold text-white" dir="ltr">{ipo.symbol || 'TBA'}</td>
-                <td className="px-4 py-3" dir="ltr" style={{ textAlign: lang === 'ar' ? 'right' : 'left' }}>{ipo.name}</td>
-                <td className="px-4 py-3" dir="ltr">{ipo.price ? `$${ipo.price}` : 'TBA'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
       </div>
     </div>
   );
@@ -496,551 +434,231 @@ export default function App() {
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  const [selectedImage, setSelectedImage] = useState(null); 
-  const [imagePreview, setImagePreview] = useState(null); 
   const [isLoading, setIsLoading] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-  const [error, setError] = useState(null);
+  const [loadingStatus, setLoadingStatus] = useState('');
   
-  // BYOK & Portfolio state
   const [geminiKey, setGeminiKey] = useState(getStoredGeminiKey());
+  const [beginnerMode, setBeginnerMode] = useState(getBeginnerMode());
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  
   const [isPortfolioOpen, setIsPortfolioOpen] = useState(false);
-  const [portfolio, setPortfolio] = useState(() => {
-    const saved = localStorage.getItem('alpha_portfolio');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [portfolio, setPortfolio] = useState(() => JSON.parse(localStorage.getItem('alpha_portfolio') || '[]'));
+  
+  const [isWatchlistOpen, setIsWatchlistOpen] = useState(false);
 
   const messagesEndRef = useRef(null);
-  const fileInputRef = useRef(null);
 
-  // Initialize Welcome Message dynamically based on language
   useEffect(() => {
-    setMessages([{
-      id: 'welcome',
-      role: 'assistant',
-      content: t.welcome,
-      rawContent: JSON.stringify({ message: t.welcome }),
-      hasImage: false
-    }]);
+    setMessages([{ id: 'welcome', role: 'assistant', content: t.welcome }]);
   }, [lang, t.welcome]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading, isListening, imagePreview]);
+  }, [messages, isLoading, loadingStatus]);
 
-  // --- Voice Engine (STT & TTS) ---
-  const handleVoiceInput = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setError(t.errorMic);
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = lang === 'ar' ? 'ar-AE' : 'en-US';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    recognition.onstart = () => setIsListening(true);
-    
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      setInput(transcript);
-      handleSend(transcript);
-    };
-
-    recognition.onerror = () => {
-      setIsListening(false);
-      setError(t.errorMic);
-    };
-
-    recognition.onend = () => setIsListening(false);
-
-    recognition.start();
-  };
-
-  const playTTS = (text) => {
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = lang === 'ar' ? 'ar-SA' : 'en-US';
-    utterance.rate = lang === 'ar' ? 0.9 : 1; 
-    window.speechSynthesis.speak(utterance);
-  };
-
-  // --- Image Handling ---
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result.split(',')[1]); 
-        setImagePreview(reader.result); 
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const removeImage = () => {
-    setSelectedImage(null);
-    setImagePreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
-  useEffect(() => {
-    const handlePaste = (e) => {
-      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-      for (let index in items) {
-        const item = items[index];
-        if (item.kind === 'file' && item.type.startsWith('image/')) {
-          const file = item.getAsFile();
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            setSelectedImage(reader.result.split(',')[1]);
-            setImagePreview(reader.result);
-          };
-          reader.readAsDataURL(file);
-        }
-      }
-    };
-    document.addEventListener('paste', handlePaste);
-    return () => document.removeEventListener('paste', handlePaste);
-  }, []);
-
-  // --- AI API Call ---
-  const handleSend = async (textToProcess) => {
+  const handleSend = async (textToProcess = null, directSymbol = null) => {
     const prompt = textToProcess || input;
-    if (!prompt.trim() && !selectedImage) return;
+    if (!prompt.trim() && !directSymbol) return;
 
-    if (!geminiKey) {
-      setError(t.requireKey);
-      setIsSettingsOpen(true);
-      return;
+    if (!geminiKey) { setIsSettingsOpen(true); return; }
+
+    const symbol = directSymbol || detectStockSymbol(prompt);
+    
+    if (!directSymbol) {
+      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', content: prompt }]);
+      setInput('');
     }
 
-    const currentImage = selectedImage;
-    const currentPreview = imagePreview;
-
-    const newUserMsg = { 
-      id: Date.now().toString(), 
-      role: 'user', 
-      content: prompt, 
-      rawContent: prompt,
-      image: currentPreview 
-    };
-    
-    setMessages(prev => [...prev, newUserMsg]);
-    setInput('');
-    removeImage(); 
     setIsLoading(true);
-    setError(null);
-
-    const schema = {
-      type: "OBJECT",
-      properties: {
-        message: { type: "STRING" },
-        widget: {
-          type: "OBJECT",
-          nullable: true,
-          properties: {
-            type: { type: "STRING" },
-            symbol: { type: "STRING", nullable: true },
-            insight: { type: "STRING", nullable: true }
-          }
-        }
-      },
-      required: ["message"]
-    };
-
-    const portfolioText = portfolio.length > 0 
-      ? `User's Portfolio:\n${portfolio.map(p => `- ${p.symbol}: ${p.qty} shares @ $${p.buyPrice}`).join('\n')}\nUse this portfolio data to give personalized advice.`
-      : "The user has not added any stocks to their portfolio yet.";
-
-    const systemInstruction = `
-      You are AlphaTrade Consultant, an elite AI personal financial advisor. 
-      CRITICAL: The user interface is currently in ${lang === 'ar' ? 'ARABIC' : 'ENGLISH'}.
-      YOU MUST reply in ${lang === 'ar' ? 'ARABIC' : 'ENGLISH'} for both the 'message' and the widget 'insight' fields.
-      However, the Finnhub API requires standard English symbols, so keep 'symbol' strictly in English (e.g., AAPL).
-      If the user uploads an image (like a chart or financial report), analyze it thoroughly and provide insights in the 'message'.
-      
-      CRITICAL FORMATTING RULES:
-      1. Your entire verbal response MUST be placed completely inside the 'message' string. 
-      2. If the user asks for a list, analysis, or explanation, you MUST provide the full comprehensive answer (including all items) directly inside the 'message' field using \\n for line breaks. DO NOT stop at the introduction.
-      3. Only use UI widgets for these specific types: 'stock' (requires symbol), 'news', 'ipo'. Do not invent widget types.
-      
-      ISLAMIC FINANCE COMPLIANCE (SHARIAH COMPLIANT):
-      You MUST act strictly as an Islamic Finance Advisor.
-      1. ONLY recommend, list, or analyze stocks that are considered Shariah-compliant (Halal).
-      2. If the user asks about a non-compliant stock (e.g., alcohol, gambling, conventional banking, high debt, pork), you MUST warn them that it is non-compliant with Islamic finance principles, and suggest a Shariah-compliant alternative in the same sector.
-      3. Always ensure your general market overviews and lists exclusively feature Shariah-compliant companies.
-      
-      Keep responses professional, insightful, and perfectly translated.
-      
-      ${portfolioText}
-    `;
+    setLoadingStatus('Gathering signals...');
 
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${geminiKey}`;
-      
-      const contents = messages.filter(msg => msg.role !== 'system').map(msg => ({
-        role: msg.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: msg.rawContent }] 
-      }));
-      
-      const currentParts = [];
-      if (prompt) currentParts.push({ text: prompt });
-      if (currentImage) {
-         currentParts.push({
-           inlineData: {
-             mimeType: "image/jpeg", 
-             data: currentImage
-           }
-         });
-         if (!prompt) currentParts.push({ text: lang === 'ar' ? 'قم بتحليل هذه الصورة مالياً.' : 'Analyze this financial image.' });
+      let cardData = null;
+      if (symbol) {
+        setLoadingStatus(`Fetching ${symbol} data...`);
+        const [quote, metric, rec, earn, news, profile] = await Promise.all([
+          fetchFinnhub(`/quote?symbol=${symbol}`),
+          fetchFinnhub(`/stock/metric?symbol=${symbol}&metric=all`),
+          fetchFinnhub(`/stock/recommendation?symbol=${symbol}`),
+          fetchFinnhub(`/stock/earnings?symbol=${symbol}`),
+          fetchFinnhub(`/company-news?symbol=${symbol}&from=${daysAgo(14)}&to=${daysAgo(0)}`),
+          fetchFinnhub(`/stock/profile2?symbol=${symbol}`)
+        ]);
+
+        const rawData = { quote, metric: metric?.metric, recommendation: rec, earnings: earn, news, profile };
+        const codeSignals = computeSignals(rawData);
+
+        setLoadingStatus('Asking AI...');
+
+        const systemInstruction = `
+          You are AlphaTrade, an educational AI assistant.
+          Beginner Mode is ${beginnerMode ? 'ON' : 'OFF'}. 
+          Language: ${lang === 'ar' ? 'Arabic' : 'English'}.
+          
+          Stock: ${symbol}
+          Profile: ${JSON.stringify(profile)}
+          Metrics Summary: P/E ${rawData.metric?.peExclExtraTTM}, Debt/Equity ${rawData.metric?.totalDebtToEquityQuarterly}
+          Recent News Headlines: ${news?.slice(0,5).map(n => n.headline).join(' | ')}
+          
+          TASK: Create a JSON response. 
+          Provide 'message' (a short greeting).
+          Provide 'decisionCard' containing:
+          - newsSentiment: (bullish/bearish/neutral based on headlines)
+          - newsExplanation: (short reason)
+          - summary: (1 sentence beginner summary of the stock's current situation)
+          - risks: (array of 2-4 strings, simple risks)
+          - whatWouldChange: (array of 1-2 strings, what would change the verdict)
+          - shariah: { compliant: boolean, reason: string, alternative: string } 
+            (Assess strictly on business model AND if debt/equity > 30% it's non-compliant).
+          
+          Ensure all strings are in ${lang === 'ar' ? 'Arabic' : 'English'}.
+          NO markdown fences. Pure JSON.
+        `;
+
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${geminiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: "Evaluate the data and provide the JSON object." }] }],
+            systemInstruction: { parts: [{ text: systemInstruction }] },
+            generationConfig: { responseMimeType: "application/json" }
+          })
+        });
+
+        if (!res.ok) throw new Error('AI Error');
+        const aiDataRaw = await res.json();
+        let aiData;
+        try {
+            const text = aiDataRaw.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '');
+            aiData = JSON.parse(text);
+        } catch(e) {
+            aiData = { message: "Failed to parse AI structured response." };
+        }
+
+        if (aiData.decisionCard) {
+          const aiSent = aiData.decisionCard.newsSentiment?.toLowerCase() || 'neutral';
+          codeSignals.newsSentiment = {
+            score: aiSent === 'bullish' ? 1 : aiSent === 'bearish' ? -1 : 0,
+            state: aiSent,
+            value: aiData.decisionCard.newsSentiment,
+            explanation: aiData.decisionCard.newsExplanation || 'Sentiment derived from recent news.'
+          };
+
+          const verdictObj = getVerdict(codeSignals);
+
+          cardData = {
+            verdict: verdictObj.verdict,
+            confidence: verdictObj.confidence,
+            summary: aiData.decisionCard.summary,
+            fiveSignals: codeSignals,
+            risks: aiData.decisionCard.risks,
+            whatWouldChange: aiData.decisionCard.whatWouldChange,
+            shariah: aiData.decisionCard.shariah,
+            52: quote && rawData.metric ? { low: rawData.metric['52WeekLow'], high: rawData.metric['52WeekHigh'], price: quote.c } : null
+          };
+        }
       }
 
-      contents.push({ role: 'user', parts: currentParts });
-
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents,
-          systemInstruction: { parts: [{ text: systemInstruction }] },
-          generationConfig: { responseMimeType: "application/json", responseSchema: schema }
-        })
-      });
-      
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData?.error?.message || `HTTP Error ${res.status}`);
-      }
-      
-      const result = await res.json();
-      const responseData = JSON.parse(result.candidates[0].content.parts[0].text);
-      
-      const newAssistantMsg = {
-        id: (Date.now() + 1).toString(),
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
         role: 'assistant',
-        content: responseData.message,
-        widget: responseData.widget,
-        rawContent: JSON.stringify(responseData),
-        hasImage: false
-      };
-      
-      setMessages(prev => [...prev, newAssistantMsg]);
-      
+        content: symbol ? `Here is the analysis for ${symbol}:` : "I couldn't detect a specific stock symbol in your request. Please ask about a specific ticker like AAPL.",
+        decisionData: cardData
+      }]);
+
     } catch (err) {
-      setError(`${t.errorApi} Details: ${err.message}`);
+      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: t.errorApi }]);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
+      setLoadingStatus('');
     }
   };
 
   return (
-    <div className="flex h-screen bg-slate-950 font-sans text-slate-300 selection:bg-emerald-500/30" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      
-      <SettingsModal 
-        isOpen={isSettingsOpen} 
-        onClose={() => setIsSettingsOpen(false)} 
-        lang={lang} 
-        geminiKey={geminiKey} 
-        setGeminiKey={setGeminiKey} 
-      />
-
-      <PortfolioModal 
-        isOpen={isPortfolioOpen}
-        onClose={() => setIsPortfolioOpen(false)}
-        lang={lang}
-        portfolio={portfolio}
-        setPortfolio={setPortfolio}
-      />
-
-      {/* Sidebar - Desktop */}
-      <div className="hidden md:flex flex-col w-72 bg-slate-900 border-x border-slate-800 shrink-0">
-        <div className="p-6 border-b border-slate-800">
-          <div className="flex items-center justify-between mb-1">
-             <div className="flex items-center gap-3 text-emerald-400 font-bold text-2xl tracking-tighter">
-                <BrainCircuit className="w-8 h-8" />
-                {t.title}
-             </div>
-             <button onClick={() => setIsSettingsOpen(true)} className="text-slate-500 hover:text-emerald-400 transition-colors">
-               <Settings size={18} />
-             </button>
-          </div>
-          <div className="text-xs font-medium text-slate-500 tracking-wide uppercase">{t.subtitle}</div>
-        </div>
-
-        <div className="px-6 pt-6">
-           <button 
-             onClick={() => setIsPortfolioOpen(true)}
-             className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 py-3 rounded-xl transition-colors font-bold text-sm shadow-sm"
-           >
-             <Briefcase size={16} className="text-amber-500" /> {t.portfolio}
-           </button>
-        </div>
-        
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          <div>
-            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">{t.capabilities}</h4>
-            <ul className="space-y-3 text-sm font-medium text-slate-400">
-              <li className="flex items-center gap-3"><ChartIcon size={16} className="text-emerald-500" /> {t.quotes}</li>
-              <li className="flex items-center gap-3"><Newspaper size={16} className="text-blue-500" /> {t.news}</li>
-              <li className="flex items-center gap-3"><TrendingUp size={16} className="text-amber-500" /> {t.ipos}</li>
-              <li className="flex items-center gap-3"><ImageIcon size={16} className="text-purple-500" /> {t.vision}</li>
-            </ul>
-          </div>
-          
-          <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 space-y-3">
-            <div className="flex items-center gap-2 text-sm font-bold text-emerald-400">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-              {t.active}
+    <div className="flex h-screen bg-slate-950 font-sans text-slate-300" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      {/* Settings Modal */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex justify-center items-center p-4">
+          <div className="bg-slate-900 border border-slate-700 p-6 rounded-2xl max-w-md w-full shadow-xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2"><Settings size={20} className="text-emerald-500" /> {t.settings}</h2>
+              <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-white"><X size={20} /></button>
             </div>
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-500">{t.engine}</span>
-              <span className="font-bold text-slate-300" dir="ltr">Gemini 3.1 Flash</span>
-            </div>
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-500">{t.source}</span>
-              <span className="font-bold text-emerald-400" dir="ltr">Finnhub.io</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Language Toggle Footer */}
-        <div className="p-4 border-t border-slate-800 flex justify-center">
-          <button 
-            onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors text-sm font-bold text-slate-300"
-          >
-            <Globe size={16} className="text-emerald-500" />
-            {lang === 'ar' ? 'Switch to English' : 'التغيير للعربية'}
-          </button>
-        </div>
-      </div>
-
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col relative h-full max-h-screen">
-        
-        {/* Mobile Header */}
-        <div className="md:hidden flex justify-between items-center p-4 bg-slate-900 border-b border-slate-800 z-10 shadow-sm">
-          <div className="flex items-center gap-2 text-emerald-400 font-bold text-xl tracking-tighter">
-            <BrainCircuit className="w-6 h-6" /> {t.title}
-          </div>
-          <div className="flex items-center gap-3">
-             <button onClick={() => setIsPortfolioOpen(true)} className="text-amber-500 hover:text-amber-400">
-               <Briefcase size={20} />
-             </button>
-             <button onClick={() => setIsSettingsOpen(true)} className="text-slate-400 hover:text-slate-200">
-               <Settings size={20} />
-             </button>
-             <button onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} className="p-2 bg-slate-800 rounded-lg text-emerald-500">
-               <Globe size={20} />
-             </button>
-          </div>
-        </div>
-
-        {/* Chat History */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scroll-smooth">
-          {messages.map((msg) => (
-            <div key={msg.id} className={`flex gap-4 max-w-4xl mx-auto ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              
-              {/* Avatar Assistant */}
-              {msg.role === 'assistant' && (
-                <div className="w-10 h-10 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0 text-emerald-400">
-                  <Bot size={20} />
-                </div>
-              )}
-
-              {/* Message Content */}
-              <div className={`flex flex-col ${msg.role === 'user' ? (lang === 'ar' ? 'items-start' : 'items-end') : (lang === 'ar' ? 'items-end' : 'items-start')} max-w-[90%] md:max-w-[85%]`}>
-                
-                {/* User Uploaded Image Preview in Chat */}
-                {msg.image && (
-                   <img src={msg.image} alt="User upload" className="max-w-sm rounded-xl mb-2 border border-slate-700 shadow-md" />
-                )}
-
-                {msg.content && (
-                  <div className="relative group">
-                    <div className={`px-5 py-3.5 rounded-2xl text-[15px] leading-relaxed shadow-sm ${
-                      msg.role === 'user' 
-                        ? `bg-emerald-600 text-white ${lang === 'ar' ? 'rounded-tl-sm' : 'rounded-tr-sm'}` 
-                        : `bg-slate-800 text-slate-200 border border-slate-700 ${lang === 'ar' ? 'rounded-tr-sm' : 'rounded-tl-sm'}`
-                    }`}>
-                      {msg.content.split('\n').map((line, i) => (
-                        <React.Fragment key={i}>
-                          {line}
-                          {i !== msg.content.split('\n').length - 1 && <br />}
-                        </React.Fragment>
-                      ))}
-                    </div>
-                    
-                    {/* AI TTS Button */}
-                    {msg.role === 'assistant' && (
-                      <button 
-                        onClick={() => playTTS(msg.content)}
-                        className={`absolute top-2 ${lang === 'ar' ? '-left-10' : '-right-10'} p-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-400 hover:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity`}
-                        title="Play Audio"
-                      >
-                        <Volume2 size={16} />
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {/* Render Dynamic Live Widget */}
-                {msg.widget && (
-                  <div className="w-full animate-in slide-in-from-bottom-2 duration-500">
-                    {msg.widget.type === 'stock' && msg.widget.symbol && (
-                      <StockWidget symbol={msg.widget.symbol.toUpperCase()} insight={msg.widget.insight} lang={lang} />
-                    )}
-                    {msg.widget.type === 'news' && <NewsWidget lang={lang} />}
-                    {msg.widget.type === 'ipo' && <IpoWidget lang={lang} />}
-                  </div>
-                )}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">{t.apiKey}</label>
+                <input type="password" value={geminiKey} onChange={(e) => { setGeminiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value); }} className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white" dir="ltr" />
               </div>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked={beginnerMode} onChange={(e) => { setBeginnerMode(e.target.checked); localStorage.setItem('alpha_beginner_mode', e.target.checked); }} className="rounded bg-slate-900 border-slate-600 text-emerald-500 focus:ring-emerald-500/20" />
+                <span className="text-sm font-medium text-slate-300">{t.beginnerMode}</span>
+              </label>
+              <button onClick={() => setIsSettingsOpen(false)} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg">{t.save}</button>
+            </div>
+          </div>
+        </div>
+      )}
 
-              {/* Avatar User */}
-              {msg.role === 'user' && (
-                <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 text-slate-400">
-                  <User size={20} />
-                </div>
-              )}
+      {/* Watchlist Modal */}
+      <WatchlistModal isOpen={isWatchlistOpen} onClose={() => setIsWatchlistOpen(false)} lang={lang} handleAnalyze={(s) => handleSend(null, s)} />
+
+      {/* Main Area */}
+      <div className="flex-1 flex flex-col relative overflow-hidden">
+        {/* Topbar */}
+        <div className="h-16 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between px-6 shrink-0 backdrop-blur-md">
+           <div className="flex items-center gap-4">
+             <div className="flex items-center gap-2 text-emerald-400 font-bold"><BrainCircuit size={20}/> {t.title}</div>
+           </div>
+           <div className="flex items-center gap-4">
+             <button onClick={() => setIsWatchlistOpen(true)} className="flex items-center gap-1 text-sm font-bold text-slate-400 hover:text-blue-500"><Eye size={16}/> {t.watchlist}</button>
+             <button onClick={() => setIsSettingsOpen(true)} className="text-slate-400 hover:text-emerald-400"><Settings size={18} /></button>
+           </div>
+        </div>
+
+        {/* Chat Feed */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 bg-slate-950">
+          {messages.map((msg, i) => (
+            <div key={i} className={`flex gap-4 max-w-4xl mx-auto ${msg.role === 'user' ? (lang === 'ar' ? 'flex-row-reverse' : '') : ''}`}>
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
+                {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
+              </div>
+              <div className={`flex flex-col gap-2 min-w-0 flex-1 ${msg.role === 'user' && lang === 'ar' ? 'items-end' : ''}`}>
+                {msg.content && (
+                  <div className={`text-sm leading-relaxed p-4 rounded-2xl break-words ${msg.role === 'user' ? 'bg-slate-800 text-slate-200' : 'bg-transparent text-slate-300'}`}>
+                    {msg.content}
+                  </div>
+                )}
+                {msg.decisionData && <DecisionWidget data={msg.decisionData} lang={lang} beginnerMode={beginnerMode} />}
+              </div>
             </div>
           ))}
-
-          {/* Loading States */}
-          {isListening && (
-            <div className="flex gap-4 max-w-4xl mx-auto justify-end animate-in fade-in">
-              <div className="bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 px-5 py-3 rounded-2xl flex items-center gap-3">
-                 <Mic size={18} className="animate-pulse" /> {t.listening}
+          {isLoading && (
+            <div className="flex gap-4 max-w-4xl mx-auto opacity-70">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center"><Bot size={16} className="animate-pulse" /></div>
+              <div className="text-sm p-4 bg-transparent text-emerald-400/80 flex items-center gap-2">
+                <RefreshCw size={14} className="animate-spin" /> {loadingStatus}
               </div>
             </div>
           )}
-
-          {isLoading && (
-             <div className="flex gap-4 max-w-4xl mx-auto justify-start animate-in fade-in">
-               <div className="w-10 h-10 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0 text-emerald-400">
-                  <Bot size={20} />
-                </div>
-                <div className={`bg-slate-800 rounded-2xl border border-slate-700 px-5 py-4 flex items-center gap-2 shadow-sm ${lang === 'ar' ? 'rounded-tr-sm' : 'rounded-tl-sm'}`}>
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                  <span className={`text-sm text-slate-400 font-medium tracking-wide ${lang === 'ar' ? 'mr-2' : 'ml-2'}`}>{t.analyzing}</span>
-                </div>
-             </div>
-          )}
-
-          {/* Error State */}
-          {error && (
-            <div className="max-w-4xl mx-auto flex items-center gap-3 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm font-medium">
-              <AlertCircle size={18} /> {error}
-            </div>
-          )}
-          
           <div ref={messagesEndRef} className="h-4" />
         </div>
 
-        {/* Input Area */}
-        <div className="p-4 bg-slate-950 border-t border-slate-800">
-          <div className="max-w-4xl mx-auto">
-            
-            {/* Suggested Prompts */}
-            {messages.length < 3 && (
-              <div className={`flex flex-wrap gap-2 mb-4 justify-center md:justify-start ${lang === 'ar' ? 'flex-row-reverse md:flex-row' : ''}`}>
-                {t.prompts.map((prompt, i) => (
-                  <button 
-                    key={i}
-                    onClick={() => handleSend(prompt)}
-                    className="text-xs font-medium px-4 py-2 bg-slate-900 border border-slate-700 rounded-full text-slate-400 hover:text-emerald-400 hover:border-emerald-500/50 hover:bg-slate-800 transition-all shadow-sm"
-                  >
-                    {prompt}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Image Preview Area */}
-            {imagePreview && (
-              <div className="mb-2 relative inline-block">
-                <img src={imagePreview} alt="Preview" className="h-20 rounded-lg border border-slate-700 object-cover" />
-                <button 
-                  onClick={removeImage}
-                  className="absolute -top-2 -right-2 bg-slate-800 text-slate-300 hover:text-white rounded-full p-1 border border-slate-600 shadow-sm"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            )}
-
-            <div className="relative flex items-end gap-2 bg-slate-900 border border-slate-700 rounded-2xl p-2 focus-within:border-emerald-500/50 focus-within:ring-1 focus-within:ring-emerald-500/50 transition-all shadow-lg">
-              
-              <button 
-                onClick={isListening ? () => window.SpeechRecognition?.abort() : handleVoiceInput}
-                disabled={isLoading}
-                className={`shrink-0 w-11 h-11 flex items-center justify-center rounded-xl transition-colors ${
-                  isListening ? 'bg-rose-500 text-white animate-pulse' : 'bg-slate-800 text-slate-400 hover:text-emerald-400 hover:bg-slate-700'
-                }`}
-                title="Voice Input"
-              >
-                {isListening ? <MicOff size={18} /> : <Mic size={18} />}
-              </button>
-
-              {/* Hidden File Input */}
-              <input 
-                type="file" 
-                accept="image/*" 
-                ref={fileInputRef} 
-                onChange={handleImageUpload} 
-                className="hidden" 
-              />
-              
-              <button 
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isLoading}
-                className="shrink-0 w-11 h-11 flex items-center justify-center rounded-xl bg-slate-800 text-slate-400 hover:text-purple-400 hover:bg-slate-700 transition-colors"
-                title="Upload Image (or Paste)"
-              >
-                <ImageIcon size={18} />
-              </button>
-
-              <textarea 
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={t.inputPlaceholder}
-                className="w-full bg-transparent text-slate-200 placeholder-slate-500 resize-none max-h-32 min-h-[44px] py-2.5 px-2 focus:outline-none text-[15px]"
-                rows={1}
-                disabled={isLoading || isListening}
-              />
-              
-              <button 
-                onClick={() => handleSend()}
-                disabled={(!input.trim() && !selectedImage) || isLoading}
-                className={`shrink-0 w-11 h-11 flex items-center justify-center rounded-xl transition-colors shadow-sm ${
-                  (!input.trim() && !selectedImage) || isLoading ? 'bg-slate-800 text-slate-500' : 'bg-emerald-500 text-white hover:bg-emerald-400'
-                }`}
-              >
-                <Send size={18} className={(input.trim() || selectedImage) && !isLoading ? (lang === 'ar' ? '-translate-x-0.5' : 'translate-x-0.5') : ''} style={{ transform: lang === 'ar' ? 'scaleX(-1)' : 'none' }} />
-              </button>
-            </div>
-            
-            <div className="text-center mt-3">
-              <span className="text-[11px] text-slate-500 font-medium tracking-wide flex items-center justify-center gap-1">
-                {t.disclaimer}
-              </span>
-            </div>
+        {/* Input */}
+        <div className="p-4 sm:p-6 bg-slate-900/50 border-t border-slate-800 backdrop-blur-md">
+          <div className="max-w-4xl mx-auto relative flex items-center gap-3">
+             <input
+               value={input}
+               onChange={(e) => setInput(e.target.value)}
+               onKeyDown={(e) => { if (e.key === 'Enter') handleSend(); }}
+               placeholder={t.inputPlaceholder}
+               className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-4 text-sm text-white focus:outline-none focus:border-emerald-500 pr-12 shadow-inner"
+             />
+             <button onClick={() => handleSend()} disabled={isLoading} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg disabled:opacity-50">
+               <Send size={18} />
+             </button>
           </div>
+          <div className="max-w-4xl mx-auto mt-2 text-center text-[10px] text-slate-600">{t.disclaimer}</div>
         </div>
-
       </div>
     </div>
   );
