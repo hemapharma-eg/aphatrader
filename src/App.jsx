@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Send, BrainCircuit, AlertCircle, Bot, User, 
-  X, Settings, Briefcase, Trash2, CheckCircle2, 
-  XCircle, MinusCircle, RefreshCw, Eye, LogOut, Globe
+  Settings, Briefcase, Trash2, CheckCircle2, 
+  XCircle, MinusCircle, RefreshCw, Eye, LogOut, Globe,
+  MessageSquare, ChevronRight, ChevronLeft, LayoutDashboard, TrendingUp, Sun, Moon
 } from 'lucide-react';
 import { supabase } from './lib/supabase';
 
@@ -18,10 +19,11 @@ const T = {
     subtitle: "مستشار الذكاء الاصطناعي",
     welcome: "مرحباً! أنا ألفا تريد. (لأغراض تعليمية فقط)\nاسألني عن أي سهم للتحليل.",
     inputPlaceholder: "اسأل عن سهم (مثل AAPL)...",
-    disclaimer: "البيانات للاستخدام التعليمي فقط وليست نصيحة مالية مضمونة. قرار الاستثمار مسؤوليتك.",
+    disclaimer: "البيانات للاستخدام التعليمي فقط وليست نصيحة مالية مضمونة.",
     settings: "الإعدادات",
     portfolio: "المحفظة",
     watchlist: "قائمة المراقبة",
+    chat: "المحادثة",
     apiKey: "مفتاح Gemini API",
     beginnerMode: "وضع المبتدئين (تبسيط المصطلحات)",
     save: "حفظ",
@@ -37,47 +39,44 @@ const T = {
     live: "مباشر",
     today: "اليوم",
     newsTitle: "أخبار السوق",
-    ipoTitle: "اكتتابات قادمة",
-    refreshAnalysis: "تحديث التحليل",
-    analyze: "تحليل",
+    analyze: "تحليل ذكي",
     movePort: "نقل للمحفظة",
     addToWatchlist: "أضف للمراقبة",
     decisionChecklist: "قائمة التحقق للمبتدئين",
-    buyChecklist: ["هل الاتجاه العام إيجابي؟", "هل هذا السهم يركز محفظتك بشدة؟", "هل الأخبار خالية من الكوارث؟", "هل مستوى المخاطرة مقبول؟", "هل السهم متوافق شرعياً؟", "هل لديك خطة لوقف الخسارة؟"],
-    sellChecklist: ["هل تغير سبب الشراء الأساسي؟", "هل الخسارة تجاوزت حدك الأقصى؟", "هل تبيع بناءً على منطق وليس ذعر؟", "هل الأخبار تزداد سوءاً؟"]
+    buyChecklist: ["هل الاتجاه العام إيجابي؟", "هل الأخبار خالية من الكوارث؟", "هل السهم متوافق شرعياً؟", "هل لديك خطة لوقف الخسارة؟"],
+    sellChecklist: ["هل تغير سبب الشراء الأساسي؟", "هل الخسارة تجاوزت حدك الأقصى؟", "هل تبيع بناءً على منطق؟"]
   },
   en: {
     title: "AlphaTrade Pro",
     subtitle: "AI Consultant",
     welcome: "Hello! I am AlphaTrade. (Educational use only)\nAsk me to analyze any stock.",
     inputPlaceholder: "Ask for stock analysis...",
-    disclaimer: "Data provided for educational purposes, not guaranteed financial advice. You decide.",
+    disclaimer: "Data provided for educational purposes, not guaranteed financial advice.",
     settings: "Settings",
     portfolio: "Portfolio",
     watchlist: "Watchlist",
+    chat: "AI Chat",
     apiKey: "Gemini API Key",
     beginnerMode: "Beginner Mode (Explain jargon)",
     save: "Save",
-    addStock: "Add Stock",
+    addStock: "Add",
     qty: "Qty",
     buyPrice: "Buy Price",
-    currentPrice: "Current Price",
+    currentPrice: "Live Price",
     pnl: "P&L",
     action: "Action",
-    totalValue: "Total Value",
+    totalValue: "Total Portfolio Value",
     analyzing: "Analyzing...",
     errorApi: "AI connection failed.",
     live: "Live",
     today: "Today",
     newsTitle: "Live News",
-    ipoTitle: "Upcoming IPOs",
-    refreshAnalysis: "Refresh Analysis",
-    analyze: "Analyze",
+    analyze: "Smart Analysis",
     movePort: "To Portfolio",
-    addToWatchlist: "Add to Watchlist",
+    addToWatchlist: "Watch",
     decisionChecklist: "Decision Checklist",
-    buyChecklist: ["Is the trend positive?", "Is it not over-concentrating your portfolio?", "Is the news clear of disasters?", "Is the risk acceptable?", "Is it Shariah compliant?", "Do you have a stop-loss plan?"],
-    sellChecklist: ["Did your original thesis change?", "Is the loss beyond your limit?", "Are you selling on logic, not panic?", "Is the outlook worsening?"]
+    buyChecklist: ["Is the trend positive?", "Is the news clear of disasters?", "Is it Shariah compliant?", "Do you have a stop-loss?"],
+    sellChecklist: ["Did your original thesis change?", "Is the loss beyond your limit?", "Are you selling on logic?"]
   }
 };
 
@@ -221,28 +220,28 @@ const AuthScreen = () => {
     setLoading(true); setError('');
     const { error } = await supabase.auth.signUp({ email, password });
     if (error) setError(error.message);
-    else setError('Success! Check your email (or try logging in if emails are disabled).');
+    else setError('Success! Check your email.');
     setLoading(false);
   };
 
   return (
-    <div className="flex h-screen bg-slate-950 items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-700 p-8 rounded-2xl max-w-md w-full shadow-xl">
-        <div className="flex justify-center mb-6 text-emerald-500"><BrainCircuit size={48}/></div>
-        <h2 className="text-2xl font-bold text-white mb-6 text-center">Login to AlphaTrade</h2>
-        {error && <div className="bg-rose-500/10 text-rose-400 p-3 rounded-lg mb-4 text-sm text-center">{error}</div>}
+    <div className="flex h-screen cosmic-bg items-center justify-center p-4">
+      <div className="glass-panel p-8 rounded-3xl max-w-md w-full">
+        <div className="flex justify-center mb-6 text-emerald-500 drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]">
+          <BrainCircuit size={56} strokeWidth={1.5}/>
+        </div>
+        <h2 className="text-3xl font-heading font-bold text-slate-800 dark:text-white mb-6 text-center tracking-tight">AlphaTrade Pro</h2>
+        {error && <div className="bg-rose-100 dark:bg-rose-500/10 border border-rose-300 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 p-3 rounded-xl mb-4 text-sm text-center">{error}</div>}
         <form className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Email</label>
-            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white" required />
+            <input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all" required />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Password</label>
-            <input type="password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white" required />
+            <input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all" required />
           </div>
-          <div className="flex gap-4 mt-6">
-            <button onClick={handleLogin} disabled={loading} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg">Login</button>
-            <button onClick={handleSignup} disabled={loading} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 rounded-lg border border-slate-600">Sign Up</button>
+          <div className="flex gap-4 mt-8">
+            <button onClick={handleLogin} disabled={loading} className="flex-1 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold py-3 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all">Login</button>
+            <button onClick={handleSignup} disabled={loading} className="flex-1 glass-card hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-white font-bold py-3 rounded-xl transition-all">Sign Up</button>
           </div>
         </form>
       </div>
@@ -253,10 +252,10 @@ const AuthScreen = () => {
 const Tooltip = ({ term, beginnerMode, explanation, children }) => {
   if (!beginnerMode) return <span>{children}</span>;
   return (
-    <span className="group relative cursor-help inline-block border-b border-dashed border-slate-500/50">
+    <span className="group relative cursor-help inline-block border-b border-dashed border-slate-400 dark:border-slate-500/50 hover:border-emerald-500/50 transition-colors">
       {children}
-      <span className="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-2 w-48 text-xs bg-slate-800 text-slate-200 rounded-lg shadow-xl border border-slate-700 z-[100] text-center font-normal">
-        <span className="font-bold text-emerald-400 block mb-1">{term}</span>
+      <span className="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-3 w-56 text-xs glass-panel text-slate-700 dark:text-slate-200 rounded-xl z-[100] text-center font-normal">
+        <span className="font-bold text-emerald-600 dark:text-emerald-400 block mb-1">{term}</span>
         {explanation}
       </span>
     </span>
@@ -272,11 +271,11 @@ const DecisionChecklist = ({ type, lang }) => {
   const allChecked = checks.every(c => c);
 
   return (
-    <div className="mt-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700">
-      <h4 className="font-bold text-slate-200 mb-3 flex items-center gap-2 text-sm">
-        <AlertCircle size={16} className="text-blue-400" /> {t.decisionChecklist} ({type})
+    <div className="mt-6 glass-card p-4 rounded-2xl">
+      <h4 className="font-heading font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2 text-sm tracking-wide">
+        <AlertCircle size={16} className="text-blue-500 dark:text-blue-400" /> {t.decisionChecklist} ({type})
       </h4>
-      <div className="space-y-2">
+      <div className="space-y-3">
         {list.map((item, i) => (
           <label key={i} className="flex items-start gap-3 cursor-pointer group">
             <input 
@@ -287,13 +286,13 @@ const DecisionChecklist = ({ type, lang }) => {
                 n[i] = !n[i];
                 setChecks(n);
               }}
-              className="mt-0.5 rounded bg-slate-900 border-slate-600 text-blue-500 focus:ring-blue-500/20"
+              className="mt-0.5 rounded bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-emerald-500 focus:ring-emerald-500/20 w-4 h-4"
             />
-            <span className={`text-sm ${checks[i] ? 'text-slate-400 line-through' : 'text-slate-300 group-hover:text-white'}`}>{item}</span>
+            <span className={`text-sm transition-colors ${checks[i] ? 'text-slate-400 dark:text-slate-500 line-through' : 'text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white'}`}>{item}</span>
           </label>
         ))}
       </div>
-      {allChecked && <div className="mt-3 text-xs font-bold text-emerald-400 flex items-center gap-1"><CheckCircle2 size={12}/> Ready!</div>}
+      {allChecked && <div className="mt-4 text-xs font-bold text-emerald-500 dark:text-emerald-400 flex items-center gap-1 animate-pulse"><CheckCircle2 size={14}/> Ready to execute!</div>}
     </div>
   );
 };
@@ -303,112 +302,115 @@ const DecisionWidget = ({ data, lang, beginnerMode }) => {
   const { verdict, confidence, fiveSignals, summary, risks, whatWouldChange, shariah, 52: range52 } = data;
   
   const colors = {
-    BUY: 'bg-emerald-500 text-white',
-    HOLD: 'bg-blue-500 text-white',
-    SELL: 'bg-rose-500 text-white',
-    WATCH: 'bg-amber-500 text-white',
-    AVOID: 'bg-red-700 text-white',
+    BUY: 'bg-gradient-to-r from-emerald-500 to-emerald-400 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]',
+    HOLD: 'bg-gradient-to-r from-blue-500 to-blue-400 text-white shadow-[0_0_20px_rgba(59,130,246,0.3)]',
+    SELL: 'bg-gradient-to-r from-rose-500 to-rose-400 text-white shadow-[0_0_20px_rgba(244,63,94,0.3)]',
+    WATCH: 'bg-gradient-to-r from-amber-500 to-amber-400 text-white shadow-[0_0_20px_rgba(245,158,11,0.3)]',
+    AVOID: 'bg-gradient-to-r from-red-700 to-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.3)]',
   };
   
-  const confColor = confidence === 'High' ? 'text-emerald-400' : confidence === 'Medium' ? 'text-amber-400' : 'text-rose-400';
+  const confColor = confidence === 'High' ? 'text-emerald-500 dark:text-emerald-400 text-glow-emerald' : confidence === 'Medium' ? 'text-amber-500 dark:text-amber-400' : 'text-rose-500 dark:text-rose-400 text-glow-rose';
 
   return (
-    <div className="mt-4 bg-slate-900 border border-slate-700 rounded-2xl p-5 max-w-md w-full shadow-lg" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      <div className="flex justify-between items-start mb-4">
-        <div className={`px-4 py-2 rounded-lg font-black tracking-widest text-xl ${colors[verdict] || 'bg-slate-700'}`}>
+    <div className="mt-4 glass-panel rounded-3xl p-6 max-w-lg w-full" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <div className="flex justify-between items-center mb-6">
+        <div className={`px-5 py-2 rounded-xl font-heading font-black tracking-widest text-2xl ${colors[verdict] || 'bg-slate-300 dark:bg-slate-700'}`}>
           {verdict}
         </div>
         <div className="text-right">
-          <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Confidence</div>
-          <div className={`font-bold ${confColor}`}>{confidence}</div>
+          <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-0.5">Confidence</div>
+          <div className={`font-heading font-black tracking-wide ${confColor}`}>{confidence}</div>
         </div>
       </div>
       
-      <p className="text-slate-200 font-medium leading-relaxed mb-6 bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
+      <p className="text-slate-700 dark:text-slate-200 font-medium leading-relaxed mb-6 glass-card p-4 rounded-2xl">
         {summary}
       </p>
 
       {/* 52 Week Bar */}
       {range52 && range52.high && range52.low && (
-        <div className="mb-6">
-          <div className="flex justify-between text-xs text-slate-500 mb-1 font-mono">
-            <Tooltip term="52w Low" beginnerMode={beginnerMode} explanation="Lowest price in the last year">${range52.low.toFixed(2)}</Tooltip>
-            <Tooltip term="52w High" beginnerMode={beginnerMode} explanation="Highest price in the last year">${range52.high.toFixed(2)}</Tooltip>
+        <div className="mb-8">
+          <div className="flex justify-between text-[10px] text-slate-500 dark:text-slate-400 mb-2 font-mono uppercase tracking-wider font-bold">
+            <Tooltip term="52w Low" beginnerMode={beginnerMode} explanation="Lowest price in the last year">L ${range52.low.toFixed(2)}</Tooltip>
+            <Tooltip term="52w High" beginnerMode={beginnerMode} explanation="Highest price in the last year">H ${range52.high.toFixed(2)}</Tooltip>
           </div>
-          <div className="relative h-2 bg-slate-800 rounded-full overflow-hidden">
+          <div className="relative h-2.5 bg-slate-200 dark:bg-slate-900 rounded-full overflow-hidden border border-slate-300 dark:border-white/5">
             <div 
-              className="absolute top-0 bottom-0 w-2 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.8)] z-10" 
+              className="absolute top-0 bottom-0 w-3 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full shadow-[0_0_10px_rgba(56,189,248,0.8)] z-10" 
               style={{ left: `${Math.max(0, Math.min(100, ((range52.price - range52.low)/(range52.high - range52.low))*100))}%` }}
             />
           </div>
-          <div className="text-center text-xs text-slate-400 mt-1 font-mono font-bold">${range52.price?.toFixed(2)}</div>
+          <div className="text-center text-sm text-slate-800 dark:text-white mt-2 font-mono font-bold tracking-tight">${range52.price?.toFixed(2)}</div>
         </div>
       )}
 
       {/* Signals */}
-      <div className="space-y-3 mb-6">
-        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
-          5 Independent Signals
-          {beginnerMode && <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Beginner Mode ON</span>}
+      <div className="space-y-3 mb-8">
+        <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+          5 Core Signals
+          {beginnerMode && <span className="text-[9px] text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full">Beginner</span>}
         </h4>
-        {Object.entries(fiveSignals).map(([key, sig]) => (
-          <div key={key} className="flex items-start gap-3 bg-slate-950 p-3 rounded-xl border border-slate-800/50">
-            <div className="mt-0.5">
-              {sig.state === 'bullish' ? <CheckCircle2 size={16} className="text-emerald-500" /> : 
-               sig.state === 'bearish' ? <XCircle size={16} className="text-rose-500" /> : 
-               <MinusCircle size={16} className="text-slate-500" />}
-            </div>
-            <div>
-              <div className="text-sm font-bold text-slate-300 capitalize">
-                <Tooltip term={key.replace(/([A-Z])/g, ' $1').trim()} beginnerMode={beginnerMode} explanation={sig.explanation}>
-                  {key.replace(/([A-Z])/g, ' $1').trim()}
-                </Tooltip>
+        <div className="grid grid-cols-1 gap-2">
+          {Object.entries(fiveSignals).map(([key, sig]) => (
+            <div key={key} className="flex items-center gap-4 bg-white/50 dark:bg-slate-900/40 p-3 rounded-2xl border border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+              <div className="shrink-0 p-2 rounded-xl bg-slate-100 dark:bg-slate-950">
+                {sig.state === 'bullish' ? <CheckCircle2 size={18} className="text-emerald-500 dark:text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" /> : 
+                 sig.state === 'bearish' ? <XCircle size={18} className="text-rose-500 dark:text-rose-400 drop-shadow-[0_0_8px_rgba(251,113,133,0.5)]" /> : 
+                 <MinusCircle size={18} className="text-slate-400 dark:text-slate-500" />}
               </div>
-              <div className="text-xs text-slate-400 mt-0.5">{beginnerMode ? sig.explanation : sig.value}</div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 capitalize">
+                  <Tooltip term={key.replace(/([A-Z])/g, ' $1').trim()} beginnerMode={beginnerMode} explanation={sig.explanation}>
+                    {key.replace(/([A-Z])/g, ' $1').trim()}
+                  </Tooltip>
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{beginnerMode ? sig.explanation : sig.value}</div>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* Shariah Note */}
       {shariah && (
-        <div className={`mb-6 p-3 rounded-xl border text-sm ${shariah.compliant ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}`}>
-          <div className="font-bold mb-1 flex items-center gap-1">
-            <Globe size={14}/> {shariah.compliant ? 'Shariah Compliant' : 'Not Shariah Compliant'}
+        <div className={`mb-8 p-4 rounded-2xl border ${shariah.compliant ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30' : 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30'}`}>
+          <div className={`font-heading font-bold mb-2 flex items-center gap-2 ${shariah.compliant ? 'text-emerald-600 dark:text-emerald-400 text-glow-emerald' : 'text-rose-600 dark:text-rose-400 text-glow-rose'}`}>
+            <Globe size={16}/> {shariah.compliant ? 'Shariah Compliant' : 'Not Shariah Compliant'}
           </div>
-          <p className="text-xs text-slate-300 mb-2">{shariah.reason}</p>
+          <p className="text-sm text-slate-700 dark:text-slate-300 mb-2 leading-relaxed">{shariah.reason}</p>
           {!shariah.compliant && shariah.alternative && (
-            <div className="text-xs">Alternative: <strong className="text-white">{shariah.alternative}</strong></div>
+            <div className="text-xs mt-3 bg-white/50 dark:bg-slate-950/50 p-2 rounded-lg border border-slate-200 dark:border-white/5">Alternative: <strong className="text-slate-800 dark:text-white">{shariah.alternative}</strong></div>
           )}
         </div>
       )}
 
       {/* Risks & Changes */}
-      <div className="space-y-4 mb-4">
+      <div className="space-y-5 mb-4">
         <div>
-          <h4 className="text-xs font-bold text-rose-400 uppercase tracking-wider mb-1">Key Risks</h4>
-          <ul className="list-disc list-inside text-xs text-slate-300 space-y-1">
-            {risks?.map((r, i) => <li key={i}>{r}</li>)}
+          <h4 className="text-[10px] font-bold text-rose-500 dark:text-rose-400 uppercase tracking-widest mb-2 flex items-center gap-2"><TrendingUp size={12}/> Key Risks</h4>
+          <ul className="list-none text-sm text-slate-700 dark:text-slate-300 space-y-2">
+            {risks?.map((r, i) => <li key={i} className="flex gap-2 items-start"><span className="text-rose-500/50">•</span> {r}</li>)}
           </ul>
         </div>
         <div>
-          <h4 className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-1">What would change this?</h4>
-          <ul className="list-disc list-inside text-xs text-slate-300 space-y-1">
-            {whatWouldChange?.map((c, i) => <li key={i}>{c}</li>)}
+          <h4 className="text-[10px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-widest mb-2 flex items-center gap-2"><RefreshCw size={12}/> What changes this?</h4>
+          <ul className="list-none text-sm text-slate-700 dark:text-slate-300 space-y-2">
+            {whatWouldChange?.map((c, i) => <li key={i} className="flex gap-2 items-start"><span className="text-blue-500/50">•</span> {c}</li>)}
           </ul>
         </div>
       </div>
       
       <DecisionChecklist type={verdict} lang={lang} />
 
-      <div className="mt-4 pt-4 border-t border-slate-800 text-[10px] text-slate-500 text-center flex items-center justify-center gap-1">
-        <AlertCircle size={12}/> Educational use only. Not financial advice. You decide.
+      <div className="mt-6 pt-4 border-t border-slate-200 dark:border-white/10 text-[10px] text-slate-500 text-center flex items-center justify-center gap-1 uppercase tracking-widest font-bold">
+        <AlertCircle size={12}/> Educational Use Only
       </div>
     </div>
   );
 };
 
-const PortfolioModal = ({ isOpen, onClose, lang, handleAnalyze, session, portfolio, setPortfolio }) => {
+
+const PortfolioTab = ({ lang, handleAnalyze, session, portfolio, setPortfolio, setTab }) => {
   const t = T[lang];
   const [symbol, setSymbol] = useState('');
   const [qty, setQty] = useState('');
@@ -416,7 +418,7 @@ const PortfolioModal = ({ isOpen, onClose, lang, handleAnalyze, session, portfol
   const [livePrices, setLivePrices] = useState({});
 
   useEffect(() => {
-    if (!isOpen || !portfolio) return;
+    if (!portfolio) return;
     const fetchPrices = async () => {
       const prices = {};
       for (const item of portfolio) {
@@ -428,9 +430,7 @@ const PortfolioModal = ({ isOpen, onClose, lang, handleAnalyze, session, portfol
       setLivePrices(prices);
     };
     fetchPrices();
-  }, [isOpen, portfolio]);
-
-  if (!isOpen) return null;
+  }, [portfolio]);
 
   const handleAdd = async (e) => {
     e.preventDefault();
@@ -459,82 +459,102 @@ const PortfolioModal = ({ isOpen, onClose, lang, handleAnalyze, session, portfol
   let totalCost = 0;
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex justify-center items-center p-4" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      <div className="bg-slate-900 border border-slate-700 p-6 rounded-2xl max-w-2xl w-full shadow-xl max-h-[90vh] flex flex-col">
-        <div className="flex justify-between items-center mb-6 shrink-0">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2"><Briefcase size={20} className="text-emerald-500" /> {t.portfolio}</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={20} /></button>
-        </div>
+    <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <h2 className="text-3xl font-heading font-bold text-slate-800 dark:text-white mb-8 flex items-center gap-3 drop-shadow-md">
+        <Briefcase size={28} className="text-emerald-500 dark:text-emerald-400" /> {t.portfolio}
+      </h2>
 
-        <form onSubmit={handleAdd} className="flex gap-2 mb-6 shrink-0">
-          <input type="text" value={symbol} onChange={e=>setSymbol(e.target.value)} placeholder="AAPL" className="w-24 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white uppercase" required dir="ltr"/>
-          <input type="number" step="any" value={qty} onChange={e=>setQty(e.target.value)} placeholder={t.qty} className="w-20 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white" required />
-          <input type="number" step="any" value={buyPrice} onChange={e=>setBuyPrice(e.target.value)} placeholder={t.buyPrice} className="w-28 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white" required />
-          <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 rounded-lg font-bold">{t.addStock}</button>
+      <div className="glass-panel p-6 rounded-3xl mb-8">
+        <form onSubmit={handleAdd} className="flex flex-wrap gap-4 items-end">
+          <div className="flex-1 min-w-[120px]">
+            <label className="block text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1 font-bold">Ticker</label>
+            <input type="text" value={symbol} onChange={e=>setSymbol(e.target.value)} placeholder="AAPL" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-800 dark:text-white uppercase focus:border-emerald-500/50 focus:outline-none" required dir="ltr"/>
+          </div>
+          <div className="w-24">
+            <label className="block text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1 font-bold">{t.qty}</label>
+            <input type="number" step="any" value={qty} onChange={e=>setQty(e.target.value)} placeholder="10" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:border-emerald-500/50 focus:outline-none" required />
+          </div>
+          <div className="w-32">
+            <label className="block text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1 font-bold">{t.buyPrice}</label>
+            <input type="number" step="any" value={buyPrice} onChange={e=>setBuyPrice(e.target.value)} placeholder="150.00" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:border-emerald-500/50 focus:outline-none" required />
+          </div>
+          <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold transition-colors">{t.addStock}</button>
         </form>
+      </div>
 
-        <div className="flex-1 overflow-y-auto space-y-2">
-          {portfolio.map(item => {
-            const live = livePrices[item.symbol];
-            const currentPrice = live?.c || null;
-            const cost = item.qty * item.buy_price;
-            const currentVal = currentPrice ? item.qty * currentPrice : cost;
-            const pnl = currentPrice ? currentVal - cost : 0;
-            const pnlPct = (currentPrice && cost > 0) ? (pnl / cost) * 100 : 0;
-            
-            if (currentPrice) {
-              totalValue += currentVal;
-              totalCost += cost;
-            }
+      <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+        {portfolio.map(item => {
+          const live = livePrices[item.symbol];
+          const currentPrice = live?.c || null;
+          const cost = item.qty * item.buy_price;
+          const currentVal = currentPrice ? item.qty * currentPrice : cost;
+          const pnl = currentPrice ? currentVal - cost : 0;
+          const pnlPct = (currentPrice && cost > 0) ? (pnl / cost) * 100 : 0;
+          
+          if (currentPrice) {
+            totalValue += currentVal;
+            totalCost += cost;
+          }
 
-            return (
-              <div key={item.id} className="flex flex-wrap md:flex-nowrap justify-between items-center bg-slate-800/50 p-3 rounded-lg border border-slate-700 gap-4">
-                <div className="w-16 font-bold text-white text-lg" dir="ltr">{item.symbol}</div>
-                <div className="text-sm text-slate-400 w-20 text-center">
-                  <div className="text-[10px] uppercase">Qty / Buy</div>
-                  <div>{item.qty} @ ${item.buy_price}</div>
+          return (
+            <div key={item.id} className="glass-card flex flex-wrap md:flex-nowrap justify-between items-center p-4 rounded-2xl gap-6 hover:bg-slate-100/50 dark:hover:bg-slate-800/60 transition-colors">
+              <div className="flex items-center gap-4 w-40">
+                <div className="w-12 h-12 rounded-xl bg-slate-200 dark:bg-slate-900 flex items-center justify-center font-heading font-bold text-slate-700 dark:text-white border border-slate-300 dark:border-white/5">
+                  {item.symbol.substring(0,2)}
                 </div>
-                <div className="text-sm font-bold w-24 text-center">
-                  <div className="text-[10px] text-slate-400 uppercase font-normal">Live Price</div>
-                  <div className="text-white">{currentPrice ? `$${currentPrice.toFixed(2)}` : 'N/A'}</div>
+                <div>
+                  <div className="font-heading font-bold text-slate-800 dark:text-white text-lg tracking-wide" dir="ltr">{item.symbol}</div>
+                  <div className="text-xs text-slate-500 font-mono">{item.qty} @ ${item.buy_price}</div>
                 </div>
-                <div className={`text-sm font-bold w-24 text-center ${currentPrice ? (pnl >= 0 ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-500'}`} dir="ltr">
-                  <div className="text-[10px] uppercase text-slate-400 font-normal">P&L</div>
+              </div>
+              
+              <div className="text-center">
+                <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">{t.currentPrice}</div>
+                <div className="text-slate-800 dark:text-white font-mono text-lg">{currentPrice ? `$${currentPrice.toFixed(2)}` : 'N/A'}</div>
+              </div>
+
+              <div className="text-center" dir="ltr">
+                <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">{t.pnl}</div>
+                <div className={`font-mono text-lg font-bold ${currentPrice ? (pnl >= 0 ? 'text-emerald-500 dark:text-emerald-400 text-glow-emerald' : 'text-rose-500 dark:text-rose-400 text-glow-rose') : 'text-slate-400'}`}>
                   {currentPrice ? `${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)} (${pnlPct.toFixed(2)}%)` : '-'}
                 </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => { handleAnalyze(`Analyze my portfolio holding of ${item.symbol}. I bought ${item.qty} shares at $${item.buy_price}. How is it performing and what is your advice?`, item.symbol); onClose(); }} className="text-xs bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded text-white font-bold">{t.analyze}</button>
-                  <button onClick={() => handleRemove(item.id)} className="text-slate-500 hover:text-rose-400 p-2"><Trash2 size={16}/></button>
-                </div>
               </div>
-            );
-          })}
-        </div>
 
-        {portfolio.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-slate-700 flex justify-between items-center text-sm shrink-0">
-            <span className="text-slate-400">{t.totalValue}</span>
-            <div className="text-right">
-              <div className="text-xl font-bold text-white">${totalValue.toFixed(2)}</div>
-              <div className={`font-bold ${totalValue >= totalCost ? 'text-emerald-400' : 'text-rose-400'}`} dir="ltr">
-                {totalValue >= totalCost ? '+' : ''}{(totalValue - totalCost).toFixed(2)} ({(totalCost > 0 ? ((totalValue - totalCost)/totalCost)*100 : 0).toFixed(2)}%)
+              <div className="flex items-center gap-3">
+                <button onClick={() => { handleAnalyze(`Analyze my portfolio holding of ${item.symbol}. I bought ${item.qty} shares at $${item.buy_price}. How is it performing and what is your advice?`, item.symbol); setTab('chat'); }} className="text-xs bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg text-white font-bold transition-colors">{t.analyze}</button>
+                <button onClick={() => handleRemove(item.id)} className="text-slate-400 hover:text-rose-500 p-2 transition-colors"><Trash2 size={18}/></button>
               </div>
             </div>
-          </div>
+          );
+        })}
+        {portfolio.length === 0 && (
+          <div className="text-center text-slate-500 mt-20">No holdings in your portfolio yet.</div>
         )}
       </div>
+
+      {portfolio.length > 0 && (
+        <div className="mt-6 glass-panel p-6 rounded-3xl flex justify-between items-center shrink-0">
+          <div className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{t.totalValue}</div>
+          <div className="text-right">
+            <div className="text-3xl font-heading font-black text-slate-800 dark:text-white tracking-tight">${totalValue.toFixed(2)}</div>
+            <div className={`font-mono text-lg font-bold ${totalValue >= totalCost ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'}`} dir="ltr">
+              {totalValue >= totalCost ? '+' : ''}{(totalValue - totalCost).toFixed(2)} ({(totalCost > 0 ? ((totalValue - totalCost)/totalCost)*100 : 0).toFixed(2)}%)
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 
-const WatchlistModal = ({ isOpen, onClose, lang, handleAnalyze, session, watchlist, setWatchlist }) => {
+const WatchlistTab = ({ lang, handleAnalyze, session, watchlist, setWatchlist, setTab }) => {
   const t = T[lang];
   const [symbol, setSymbol] = useState('');
   const [livePrices, setLivePrices] = useState({});
 
   useEffect(() => {
-    if (!isOpen || !watchlist) return;
+    if (!watchlist) return;
     const fetchPrices = async () => {
       const prices = {};
       for (const s of watchlist) {
@@ -544,11 +564,10 @@ const WatchlistModal = ({ isOpen, onClose, lang, handleAnalyze, session, watchli
       setLivePrices(prices);
     };
     fetchPrices();
-  }, [isOpen, watchlist]);
+  }, [watchlist]);
 
-  if (!isOpen) return null;
-
-  const handleAdd = async () => {
+  const handleAdd = async (e) => {
+    e.preventDefault();
     if (!symbol || !session) return;
     const s = symbol.toUpperCase();
     if (!watchlist.includes(s)) {
@@ -568,37 +587,48 @@ const WatchlistModal = ({ isOpen, onClose, lang, handleAnalyze, session, watchli
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex justify-center items-center p-4" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      <div className="bg-slate-900 border border-slate-700 p-6 rounded-2xl max-w-lg w-full shadow-xl">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2"><Eye size={20} className="text-blue-500" /> {t.watchlist}</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={20} /></button>
-        </div>
+    <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <h2 className="text-3xl font-heading font-bold text-slate-800 dark:text-white mb-8 flex items-center gap-3 drop-shadow-md">
+        <Eye size={28} className="text-blue-500 dark:text-blue-400" /> {t.watchlist}
+      </h2>
 
-        <div className="flex gap-2 mb-4">
-          <input type="text" value={symbol} onChange={e=>setSymbol(e.target.value)} placeholder="AAPL" className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white uppercase" dir="ltr"/>
-          <button onClick={handleAdd} className="bg-blue-600 hover:bg-blue-500 text-white px-4 rounded-lg font-bold">Add</button>
-        </div>
+      <div className="glass-panel p-6 rounded-3xl mb-8">
+        <form onSubmit={handleAdd} className="flex gap-4">
+          <input type="text" value={symbol} onChange={e=>setSymbol(e.target.value)} placeholder="AAPL" className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-800 dark:text-white uppercase focus:border-blue-500/50 focus:outline-none" dir="ltr" required/>
+          <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-bold transition-colors">{t.addStock}</button>
+        </form>
+      </div>
 
-        <div className="space-y-2 max-h-64 overflow-y-auto">
-          {watchlist.map(s => {
-            const data = livePrices[s];
-            const isPos = data?.dp >= 0;
-            return (
-              <div key={s} className="flex justify-between items-center bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto pb-6">
+        {watchlist.map(s => {
+          const data = livePrices[s];
+          const isPos = data?.dp >= 0;
+          return (
+            <div key={s} className="glass-card p-5 rounded-2xl flex flex-col justify-between hover:bg-slate-100/50 dark:hover:bg-slate-800/60 transition-colors group">
+              <div className="flex justify-between items-start mb-4">
+                <div className="font-heading font-bold text-slate-800 dark:text-white text-2xl tracking-wide" dir="ltr">{s}</div>
+                <button onClick={() => handleRemove(s)} className="text-slate-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={18}/></button>
+              </div>
+              <div className="flex justify-between items-end">
                 <div>
-                  <span className="font-bold text-white text-lg mr-2" dir="ltr">{s}</span>
-                  {data && data.c && <span className="text-slate-300">${data.c?.toFixed(2)}</span>}
+                  <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Price</div>
+                  <div className="text-xl font-mono text-slate-800 dark:text-white">{data && data.c ? `$${data.c.toFixed(2)}` : 'N/A'}</div>
                 </div>
-                <div className="flex items-center gap-3">
-                  {data && data.c ? <span className={`text-sm font-bold ${isPos?'text-emerald-400':'text-rose-400'}`} dir="ltr">{isPos?'+':''}{data.dp?.toFixed(2)}%</span> : <span className="text-sm font-bold text-slate-500">N/A</span>}
-                  <button onClick={() => { handleAnalyze(s); onClose(); }} className="text-xs bg-slate-700 hover:bg-emerald-600 px-2 py-1 rounded text-white">{t.analyze}</button>
-                  <button onClick={() => handleRemove(s)} className="text-slate-500 hover:text-rose-400"><Trash2 size={16}/></button>
+                <div className="text-right">
+                  {data && data.c && (
+                    <div className={`text-lg font-mono font-bold ${isPos?'text-emerald-500 dark:text-emerald-400 text-glow-emerald':'text-rose-500 dark:text-rose-400 text-glow-rose'}`} dir="ltr">
+                      {isPos?'+':''}{data.dp?.toFixed(2)}%
+                    </div>
+                  )}
                 </div>
               </div>
-            );
-          })}
-        </div>
+              <button onClick={() => { handleAnalyze(s); setTab('chat'); }} className="mt-5 w-full text-sm bg-slate-200 dark:bg-slate-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 py-2 rounded-xl text-slate-700 dark:text-white font-bold transition-colors">{t.analyze}</button>
+            </div>
+          );
+        })}
+        {watchlist.length === 0 && (
+          <div className="col-span-full text-center text-slate-500 mt-10">No symbols in watchlist.</div>
+        )}
       </div>
     </div>
   );
@@ -609,8 +639,21 @@ const WatchlistModal = ({ isOpen, onClose, lang, handleAnalyze, session, watchli
 export default function App() {
   const [session, setSession] = useState(null);
   
-  const [lang, setLang] = useState('ar');
-  const t = T[lang];
+  // New user defaults: English, Light mode
+  const [lang, setLang] = useState('en');
+  const [theme, setTheme] = useState('light');
+
+  // Apply theme class to document body
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+
+  // Tabs: 'chat', 'portfolio', 'watchlist', 'settings'
+  const [activeTab, setActiveTab] = useState('chat');
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -619,12 +662,8 @@ export default function App() {
   
   const [geminiKey, setGeminiKey] = useState(getStoredGeminiKey());
   const [beginnerMode, setBeginnerMode] = useState(true);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
-  const [isWatchlistOpen, setIsWatchlistOpen] = useState(false);
   const [watchlist, setWatchlist] = useState([]);
-
-  const [isPortfolioOpen, setIsPortfolioOpen] = useState(false);
   const [portfolio, setPortfolio] = useState([]);
 
   const messagesEndRef = useRef(null);
@@ -662,13 +701,15 @@ export default function App() {
 
   useEffect(() => {
     if (session && messages.length === 0) {
-       setMessages([{ id: 'welcome', role: 'assistant', content: t.welcome }]);
+       setMessages([{ id: 'welcome', role: 'assistant', content: T[lang].welcome }]);
     }
-  }, [lang, t.welcome, session, messages.length]);
+  }, [lang, session, messages.length]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading, loadingStatus]);
+    if (activeTab === 'chat') {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, isLoading, loadingStatus, activeTab]);
 
   if (!session) {
     return <AuthScreen />;
@@ -678,7 +719,7 @@ export default function App() {
     const prompt = textToProcess || input;
     if (!prompt.trim() && !directSymbol) return;
 
-    if (!geminiKey) { setIsSettingsOpen(true); return; }
+    if (!geminiKey) { setActiveTab('settings'); return; }
 
     const symbol = directSymbol || detectStockSymbol(prompt);
     
@@ -688,7 +729,8 @@ export default function App() {
     }
 
     setIsLoading(true);
-    setLoadingStatus('Gathering signals from FMP & Polygon...');
+    setActiveTab('chat');
+    setLoadingStatus('Gathering signals...');
 
     try {
       let cardData = null;
@@ -822,104 +864,138 @@ export default function App() {
         }]);
       }
     } catch (err) {
-      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: t.errorApi }]);
+      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: T[lang].errorApi }]);
     } finally {
       setIsLoading(false);
       setLoadingStatus('');
     }
   };
 
+  const NavItem = ({ id, icon: Icon, label }) => (
+    <button 
+      onClick={() => setActiveTab(id)}
+      className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all ${activeTab === id ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'text-slate-500 hover:text-emerald-500 hover:bg-slate-100 dark:hover:bg-slate-800/50 dark:text-slate-400 dark:hover:text-emerald-400'}`}
+    >
+      <Icon size={20} />
+      <span className="hidden md:inline">{label}</span>
+    </button>
+  );
+
   return (
-    <div className="flex h-screen bg-slate-950 font-sans text-slate-300" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      {/* Settings Modal */}
-      {isSettingsOpen && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex justify-center items-center p-4">
-          <div className="bg-slate-900 border border-slate-700 p-6 rounded-2xl max-w-md w-full shadow-xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2"><Settings size={20} className="text-emerald-500" /> {t.settings}</h2>
-              <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-white"><X size={20} /></button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">{t.apiKey}</label>
-                <input type="password" value={geminiKey} onChange={(e) => { setGeminiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value); }} className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white" dir="ltr" />
-              </div>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" checked={beginnerMode} onChange={(e) => handleSaveBeginnerMode(e.target.checked)} className="rounded bg-slate-900 border-slate-600 text-emerald-500 focus:ring-emerald-500/20" />
-                <span className="text-sm font-medium text-slate-300">{t.beginnerMode}</span>
-              </label>
-              <button onClick={() => setIsSettingsOpen(false)} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg">{t.save}</button>
-            </div>
+    <div className="flex h-screen cosmic-bg transition-colors duration-300" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      {/* Sidebar Navigation */}
+      <div className="w-16 md:w-64 glass-panel border-r border-slate-200 dark:border-white/5 flex flex-col shrink-0 z-20">
+        <div className="h-20 flex items-center justify-center md:justify-start md:px-6 shrink-0 border-b border-slate-200 dark:border-white/5">
+          <BrainCircuit size={28} className="text-emerald-500 dark:text-emerald-400 drop-shadow-[0_0_10px_rgba(16,185,129,0.5)]"/>
+          <span className="hidden md:inline ml-3 font-heading font-black text-xl text-slate-800 dark:text-white tracking-tight">AlphaTrade</span>
+        </div>
+        
+        <div className="flex-1 px-2 py-6 space-y-2 overflow-y-auto">
+          <NavItem id="chat" icon={MessageSquare} label={T[lang].chat} />
+          <NavItem id="portfolio" icon={Briefcase} label={T[lang].portfolio} />
+          <NavItem id="watchlist" icon={Eye} label={T[lang].watchlist} />
+          <NavItem id="settings" icon={Settings} label={T[lang].settings} />
+        </div>
+
+        <div className="p-4 border-t border-slate-200 dark:border-white/5 space-y-2">
+          <div className="flex gap-2">
+            <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-white font-bold transition-colors">
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+            <button onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-white font-bold transition-colors uppercase">
+              <Globe size={16} /> <span className="hidden md:inline">{lang === 'ar' ? 'EN' : 'AR'}</span>
+            </button>
           </div>
+          <button onClick={() => supabase.auth.signOut()} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">
+            <LogOut size={16} /> <span className="hidden md:inline">Logout</span>
+          </button>
         </div>
-      )}
+      </div>
 
-      {/* Portfolio Modal */}
-      <PortfolioModal isOpen={isPortfolioOpen} onClose={() => setIsPortfolioOpen(false)} lang={lang} handleAnalyze={(text, s) => handleSend(text, s)} session={session} portfolio={portfolio} setPortfolio={setPortfolio} />
-
-      {/* Watchlist Modal */}
-      <WatchlistModal isOpen={isWatchlistOpen} onClose={() => setIsWatchlistOpen(false)} lang={lang} handleAnalyze={(s) => handleSend(null, s)} session={session} watchlist={watchlist} setWatchlist={setWatchlist} />
-
-      {/* Main Area */}
-      <div className="flex-1 flex flex-col relative overflow-hidden">
-        {/* Topbar */}
-        <div className="h-16 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between px-6 shrink-0 backdrop-blur-md">
-           <div className="flex items-center gap-4">
-             <div className="flex items-center gap-2 text-emerald-400 font-bold"><BrainCircuit size={20}/> {t.title}</div>
-           </div>
-           <div className="flex items-center gap-4">
-             <button onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} className="px-2 py-1 text-xs font-bold rounded bg-slate-800 text-slate-300 hover:text-white uppercase">{lang === 'ar' ? 'EN' : 'AR'}</button>
-             <button onClick={() => setIsPortfolioOpen(true)} className="flex items-center gap-1 text-sm font-bold text-slate-400 hover:text-emerald-400"><Briefcase size={16}/> {t.portfolio}</button>
-             <button onClick={() => setIsWatchlistOpen(true)} className="flex items-center gap-1 text-sm font-bold text-slate-400 hover:text-blue-500"><Eye size={16}/> {t.watchlist}</button>
-             <button onClick={() => setIsSettingsOpen(true)} className="text-slate-400 hover:text-emerald-400"><Settings size={18} /></button>
-             <button onClick={() => supabase.auth.signOut()} title="Logout" className="text-slate-500 hover:text-rose-400 ml-2"><LogOut size={18} /></button>
-           </div>
-        </div>
-
-        {/* Chat Feed */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 bg-slate-950">
-          {messages.map((msg, i) => (
-            <div key={i} className={`flex gap-4 max-w-4xl mx-auto ${msg.role === 'user' ? (lang === 'ar' ? 'flex-row-reverse' : '') : ''}`}>
-              <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
-                {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
-              </div>
-              <div className={`flex flex-col gap-2 min-w-0 flex-1 ${msg.role === 'user' && lang === 'ar' ? 'items-end' : ''}`}>
-                {msg.content && (
-                  <div className={`text-sm leading-relaxed p-4 rounded-2xl break-words whitespace-pre-wrap ${msg.role === 'user' ? 'bg-slate-800 text-slate-200' : 'bg-transparent text-slate-300'}`}>
-                    {msg.content}
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col relative overflow-hidden bg-gradient-to-br from-white/50 to-slate-50/50 dark:from-slate-950/50 dark:to-slate-900/50 backdrop-blur-3xl">
+        
+        {/* Chat Tab */}
+        {activeTab === 'chat' && (
+          <div className="flex-1 flex flex-col h-full animate-in fade-in zoom-in-95 duration-300">
+            {/* Chat Feed */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+              {messages.map((msg, i) => (
+                <div key={i} className={`flex gap-4 max-w-4xl mx-auto ${msg.role === 'user' ? (lang === 'ar' ? 'flex-row-reverse' : 'flex-row-reverse') : ''}`}>
+                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-lg ${msg.role === 'user' ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white' : 'bg-white dark:bg-slate-800 border border-emerald-500/30 text-emerald-500 dark:text-emerald-400'}`}>
+                    {msg.role === 'user' ? <User size={20} /> : <Bot size={20} />}
                   </div>
-                )}
-                {msg.decisionData && <DecisionWidget data={msg.decisionData} lang={lang} beginnerMode={beginnerMode} />}
-              </div>
+                  <div className={`flex flex-col gap-2 min-w-0 flex-1 ${msg.role === 'user' ? (lang === 'ar' ? 'items-start' : 'items-end') : 'items-start'}`}>
+                    {msg.content && (
+                      <div className={`text-sm leading-relaxed p-5 rounded-3xl break-words whitespace-pre-wrap shadow-md ${msg.role === 'user' ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-tr-sm' : 'glass-card text-slate-800 dark:text-slate-200 rounded-tl-sm'}`}>
+                        {msg.content}
+                      </div>
+                    )}
+                    {msg.decisionData && <DecisionWidget data={msg.decisionData} lang={lang} beginnerMode={beginnerMode} />}
+                  </div>
+                </div>
+              ))}
+              {isLoading && (
+                <div className="flex gap-4 max-w-4xl mx-auto opacity-70">
+                  <div className="w-10 h-10 rounded-2xl bg-white dark:bg-slate-800 text-emerald-500 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/30"><Bot size={20} className="animate-pulse" /></div>
+                  <div className="text-sm p-5 glass-card text-emerald-600 dark:text-emerald-400 rounded-3xl rounded-tl-sm flex items-center gap-3">
+                    <RefreshCw size={16} className="animate-spin" /> <span className="font-medium tracking-wide">{loadingStatus}</span>
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} className="h-4" />
             </div>
-          ))}
-          {isLoading && (
-            <div className="flex gap-4 max-w-4xl mx-auto opacity-70">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center"><Bot size={16} className="animate-pulse" /></div>
-              <div className="text-sm p-4 bg-transparent text-emerald-400/80 flex items-center gap-2">
-                <RefreshCw size={14} className="animate-spin" /> {loadingStatus}
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} className="h-4" />
-        </div>
 
-        {/* Input */}
-        <div className="p-4 sm:p-6 bg-slate-900/50 border-t border-slate-800 backdrop-blur-md">
-          <div className="max-w-4xl mx-auto relative flex items-center gap-3">
-             <input
-               value={input}
-               onChange={(e) => setInput(e.target.value)}
-               onKeyDown={(e) => { if (e.key === 'Enter') handleSend(); }}
-               placeholder={t.inputPlaceholder}
-               className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-4 text-sm text-white focus:outline-none focus:border-emerald-500 pr-12 shadow-inner"
-             />
-             <button onClick={() => handleSend()} disabled={isLoading} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg disabled:opacity-50">
-               <Send size={18} />
-             </button>
+            {/* Input */}
+            <div className="p-4 sm:p-6 bg-white/80 dark:bg-slate-900/80 border-t border-slate-200 dark:border-white/5 backdrop-blur-xl shrink-0">
+              <div className="max-w-4xl mx-auto relative flex items-center">
+                 <input
+                   value={input}
+                   onChange={(e) => setInput(e.target.value)}
+                   onKeyDown={(e) => { if (e.key === 'Enter') handleSend(); }}
+                   placeholder={T[lang].inputPlaceholder}
+                   className="w-full bg-slate-100/50 dark:bg-slate-950/50 border border-slate-300 dark:border-white/10 rounded-2xl px-6 py-4 text-base text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 pr-16 shadow-inner transition-all"
+                 />
+                 <button onClick={() => handleSend()} disabled={isLoading} className={`absolute ${lang === 'ar' ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 p-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl disabled:opacity-50 transition-colors shadow-lg`}>
+                   <Send size={20} className={lang === 'ar' ? 'rotate-180' : ''}/>
+                 </button>
+              </div>
+              <div className="max-w-4xl mx-auto mt-3 text-center text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-bold">{T[lang].disclaimer}</div>
+            </div>
           </div>
-          <div className="max-w-4xl mx-auto mt-2 text-center text-[10px] text-slate-600">{t.disclaimer}</div>
-        </div>
+        )}
+
+        {/* Portfolio Tab */}
+        {activeTab === 'portfolio' && (
+          <PortfolioTab lang={lang} handleAnalyze={handleSend} session={session} portfolio={portfolio} setPortfolio={setPortfolio} setTab={setActiveTab} />
+        )}
+
+        {/* Watchlist Tab */}
+        {activeTab === 'watchlist' && (
+          <WatchlistTab lang={lang} handleAnalyze={handleSend} session={session} watchlist={watchlist} setWatchlist={setWatchlist} setTab={setActiveTab} />
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === 'settings' && (
+          <div className="h-full flex items-center justify-center p-6 animate-in fade-in zoom-in-95 duration-300">
+            <div className="glass-panel p-8 rounded-3xl max-w-md w-full">
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-2xl font-heading font-bold text-slate-800 dark:text-white flex items-center gap-3"><Settings size={24} className="text-emerald-500" /> {T[lang].settings}</h2>
+              </div>
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">{T[lang].apiKey}</label>
+                  <input type="password" value={geminiKey} onChange={(e) => { setGeminiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value); }} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500/50" dir="ltr" />
+                </div>
+                <label className="flex items-center gap-4 cursor-pointer p-4 glass-card rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors">
+                  <input type="checkbox" checked={beginnerMode} onChange={(e) => handleSaveBeginnerMode(e.target.checked)} className="rounded bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-emerald-500 focus:ring-emerald-500/20 w-5 h-5" />
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{T[lang].beginnerMode}</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
