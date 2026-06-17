@@ -476,14 +476,16 @@ const PortfolioModal = ({ isOpen, onClose, lang, handleAnalyze, session, portfol
         <div className="flex-1 overflow-y-auto space-y-2">
           {portfolio.map(item => {
             const live = livePrices[item.symbol];
-            const currentPrice = live ? live.c : item.buy_price;
-            const currentVal = item.qty * currentPrice;
+            const currentPrice = live?.c || null;
             const cost = item.qty * item.buy_price;
-            const pnl = currentVal - cost;
-            const pnlPct = cost > 0 ? (pnl / cost) * 100 : 0;
+            const currentVal = currentPrice ? item.qty * currentPrice : cost;
+            const pnl = currentPrice ? currentVal - cost : 0;
+            const pnlPct = (currentPrice && cost > 0) ? (pnl / cost) * 100 : 0;
             
-            totalValue += currentVal;
-            totalCost += cost;
+            if (currentPrice) {
+              totalValue += currentVal;
+              totalCost += cost;
+            }
 
             return (
               <div key={item.id} className="flex flex-wrap md:flex-nowrap justify-between items-center bg-slate-800/50 p-3 rounded-lg border border-slate-700 gap-4">
@@ -494,11 +496,11 @@ const PortfolioModal = ({ isOpen, onClose, lang, handleAnalyze, session, portfol
                 </div>
                 <div className="text-sm font-bold w-24 text-center">
                   <div className="text-[10px] text-slate-400 uppercase font-normal">Live Price</div>
-                  <div className="text-white">${currentPrice.toFixed(2)}</div>
+                  <div className="text-white">{currentPrice ? `$${currentPrice.toFixed(2)}` : 'N/A'}</div>
                 </div>
-                <div className={`text-sm font-bold w-24 text-center ${pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`} dir="ltr">
+                <div className={`text-sm font-bold w-24 text-center ${currentPrice ? (pnl >= 0 ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-500'}`} dir="ltr">
                   <div className="text-[10px] uppercase text-slate-400 font-normal">P&L</div>
-                  {pnl >= 0 ? '+' : ''}{pnl.toFixed(2)} ({pnlPct.toFixed(2)}%)
+                  {currentPrice ? `${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)} (${pnlPct.toFixed(2)}%)` : '-'}
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => { handleAnalyze(`Analyze my portfolio holding of ${item.symbol}. I bought ${item.qty} shares at $${item.buy_price}. How is it performing and what is your advice?`, item.symbol); onClose(); }} className="text-xs bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded text-white font-bold">{t.analyze}</button>
@@ -586,10 +588,10 @@ const WatchlistModal = ({ isOpen, onClose, lang, handleAnalyze, session, watchli
               <div key={s} className="flex justify-between items-center bg-slate-800/50 p-3 rounded-lg border border-slate-700">
                 <div>
                   <span className="font-bold text-white text-lg mr-2" dir="ltr">{s}</span>
-                  {data && <span className="text-slate-300">${data.c?.toFixed(2)}</span>}
+                  {data && data.c && <span className="text-slate-300">${data.c?.toFixed(2)}</span>}
                 </div>
                 <div className="flex items-center gap-3">
-                  {data && <span className={`text-sm font-bold ${isPos?'text-emerald-400':'text-rose-400'}`} dir="ltr">{isPos?'+':''}{data.dp?.toFixed(2)}%</span>}
+                  {data && data.c ? <span className={`text-sm font-bold ${isPos?'text-emerald-400':'text-rose-400'}`} dir="ltr">{isPos?'+':''}{data.dp?.toFixed(2)}%</span> : <span className="text-sm font-bold text-slate-500">N/A</span>}
                   <button onClick={() => { handleAnalyze(s); onClose(); }} className="text-xs bg-slate-700 hover:bg-emerald-600 px-2 py-1 rounded text-white">{t.analyze}</button>
                   <button onClick={() => handleRemove(s)} className="text-slate-500 hover:text-rose-400"><Trash2 size={16}/></button>
                 </div>
@@ -789,13 +791,23 @@ export default function App() {
           decisionData: cardData
         }]);
       } else {
+        setLoadingStatus('Fetching market context...');
+        const marketNewsRaw = await fetchPolygon(`/v2/reference/news?limit=10`);
+        const marketNews = marketNewsRaw?.results || [];
+        const newsContext = marketNews.map(n => `- ${n.title} (Tickers: ${n.tickers?.join(', ') || 'General'})`).join('\n');
+
         setLoadingStatus('Asking AI...');
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${geminiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            systemInstruction: { parts: [{ text: `You are an educational AI financial advisor. Answer the user's question in ${lang === 'ar' ? 'Arabic' : 'English'} simply and directly without markdown fences.` }] },
+            systemInstruction: { parts: [{ text: `You are a premium AI financial analyst. Provide highly informative, data-driven answers with discussion and market predictions based on the latest context. Do NOT tell the user to use other apps or websites; provide the best possible analysis yourself. 
+            
+            LATEST MARKET NEWS:
+            ${newsContext}
+            
+            Answer the user's question in ${lang === 'ar' ? 'Arabic' : 'English'} directly without markdown fences. Provide numbers and insights.` }] },
           })
         });
 
@@ -856,6 +868,7 @@ export default function App() {
              <div className="flex items-center gap-2 text-emerald-400 font-bold"><BrainCircuit size={20}/> {t.title}</div>
            </div>
            <div className="flex items-center gap-4">
+             <button onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} className="px-2 py-1 text-xs font-bold rounded bg-slate-800 text-slate-300 hover:text-white uppercase">{lang === 'ar' ? 'EN' : 'AR'}</button>
              <button onClick={() => setIsPortfolioOpen(true)} className="flex items-center gap-1 text-sm font-bold text-slate-400 hover:text-emerald-400"><Briefcase size={16}/> {t.portfolio}</button>
              <button onClick={() => setIsWatchlistOpen(true)} className="flex items-center gap-1 text-sm font-bold text-slate-400 hover:text-blue-500"><Eye size={16}/> {t.watchlist}</button>
              <button onClick={() => setIsSettingsOpen(true)} className="text-slate-400 hover:text-emerald-400"><Settings size={18} /></button>
