@@ -9,7 +9,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
-        heading: ['Outfit', 'sans-serif'], // Keep Outfit for headings for that modern feel
+        heading: ['Outfit', 'sans-serif'],
       },
       colors: {
         navy: {
@@ -32,5 +32,7 @@ export default {
       }
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'),
+  ],
 }

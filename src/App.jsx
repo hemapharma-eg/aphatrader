@@ -5,6 +5,7 @@ import {
   XCircle, MinusCircle, RefreshCw, Eye, LogOut, Globe,
   MessageSquare, ChevronRight, ChevronLeft, LayoutDashboard, TrendingUp, Sun, Moon
 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { supabase } from './lib/supabase';
 
 // --- API Keys ---
@@ -957,8 +958,8 @@ export default function App() {
                   </div>
                   <div className={`flex flex-col gap-2 min-w-0 flex-1 ${msg.role === 'user' ? (lang === 'ar' ? 'items-start' : 'items-end') : 'items-start'}`}>
                     {msg.content && (
-                      <div className={`text-sm leading-relaxed p-5 rounded-3xl break-words whitespace-pre-wrap shadow-md ${msg.role === 'user' ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-tr-sm' : 'glass-card text-slate-800 dark:text-slate-200 rounded-tl-sm'}`}>
-                        {msg.content}
+                      <div className={`text-sm leading-relaxed p-5 rounded-3xl break-words shadow-md ${msg.role === 'user' ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-tr-sm whitespace-pre-wrap' : 'glass-card text-slate-800 dark:text-slate-200 rounded-tl-sm prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-headings:font-heading prose-a:text-accent-teal prose-strong:text-slate-900 dark:prose-strong:text-white marker:text-navy-500 dark:marker:text-accent-teal'}`}>
+                        {msg.role === 'user' ? msg.content : <ReactMarkdown>{msg.content}</ReactMarkdown>}
                       </div>
                     )}
                     {msg.decisionData && <DecisionWidget data={msg.decisionData} lang={lang} beginnerMode={beginnerMode} />}
