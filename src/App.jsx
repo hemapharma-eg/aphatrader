@@ -669,7 +669,7 @@ export default function App() {
     `;
 
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${geminiKey}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
       
       const contents = messages.filter(msg => msg.role !== 'system').map(msg => ({
         role: msg.role === 'assistant' ? 'model' : 'user',
@@ -702,11 +702,10 @@ export default function App() {
       });
       
       if (!res.ok) {
-        if(res.status === 404) {
-             throw new Error("Model not found. The API endpoint gemini-3.1-flash-lite might not be available or requires special access.");
-        }
-        throw new Error();
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData?.error?.message || `HTTP Error ${res.status}`);
       }
+      
       const result = await res.json();
       const responseData = JSON.parse(result.candidates[0].content.parts[0].text);
       
@@ -722,7 +721,7 @@ export default function App() {
       setMessages(prev => [...prev, newAssistantMsg]);
       
     } catch (err) {
-      setError(err.message === "Model not found. The API endpoint gemini-3.1-flash-lite might not be available or requires special access." ? err.message : t.errorApi);
+      setError(`${t.errorApi} Details: ${err.message}`);
     } finally {
       setIsLoading(false);
     }
