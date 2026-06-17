@@ -669,7 +669,7 @@ export default function App() {
     `;
 
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${geminiKey}`;
       
       const contents = messages.filter(msg => msg.role !== 'system').map(msg => ({
         role: msg.role === 'assistant' ? 'model' : 'user',
