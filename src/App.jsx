@@ -662,7 +662,12 @@ export default function App() {
       YOU MUST reply in ${lang === 'ar' ? 'ARABIC' : 'ENGLISH'} for both the 'message' and the widget 'insight' fields.
       However, the Finnhub API requires standard English symbols, so keep 'symbol' strictly in English (e.g., AAPL).
       If the user uploads an image (like a chart or financial report), analyze it thoroughly and provide insights in the 'message'.
-      Delegate specific real-time market data requests to UI widgets (types: 'stock', 'news', 'ipo') when appropriate.
+      
+      CRITICAL FORMATTING RULES:
+      1. Your entire verbal response MUST be placed completely inside the 'message' string. 
+      2. If the user asks for a list, analysis, or explanation, you MUST provide the full comprehensive answer (including all items) directly inside the 'message' field using \\n for line breaks. DO NOT stop at the introduction.
+      3. Only use UI widgets for these specific types: 'stock' (requires symbol), 'news', 'ipo'. Do not invent widget types.
+      
       Keep responses professional, insightful, and perfectly translated.
       
       ${portfolioText}
