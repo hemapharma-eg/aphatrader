@@ -3,16 +3,14 @@ import {
   Send, BrainCircuit, TrendingUp, TrendingDown, Newspaper, 
   AlertCircle, Activity, Bot, User, Sparkles, CalendarDays, 
   LineChart as ChartIcon, Zap, Mic, MicOff, Volume2, Globe, Image as ImageIcon, X,
-  Settings, Briefcase, Plus, Trash2, CheckCircle2, XCircle, MinusCircle, HelpCircle, RefreshCw, Eye
+  Settings, Briefcase, Plus, Trash2, CheckCircle2, XCircle, MinusCircle, HelpCircle, RefreshCw, Eye, LogOut
 } from 'lucide-react';
+import { supabase } from './lib/supabase';
 
 // --- API Keys ---
 // TODO: Move Finnhub API key to environment variable or backend proxy before production.
-// WARNING: Leaving this hardcoded exposes it to client-side scraping.
 const FINNHUB_API_KEY = "d8pb0h9r01qgoi5hni8gd8pb0h9r01qgoi5hni90";
 const getStoredGeminiKey = () => localStorage.getItem('gemini_api_key') || '';
-const getBeginnerMode = () => localStorage.getItem('alpha_beginner_mode') !== 'false';
-const getWatchlist = () => JSON.parse(localStorage.getItem('alpha_watchlist') || '[]');
 
 // --- Translations ---
 const T = {
@@ -192,6 +190,54 @@ const getVerdict = (signals) => {
 };
 
 // --- Components ---
+const AuthScreen = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true); setError('');
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) setError(error.message);
+    setLoading(false);
+  };
+
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    setLoading(true); setError('');
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) setError(error.message);
+    else setError('Success! Check your email (or try logging in if emails are disabled).');
+    setLoading(false);
+  };
+
+  return (
+    <div className="flex h-screen bg-slate-950 items-center justify-center p-4">
+      <div className="bg-slate-900 border border-slate-700 p-8 rounded-2xl max-w-md w-full shadow-xl">
+        <div className="flex justify-center mb-6 text-emerald-500"><BrainCircuit size={48}/></div>
+        <h2 className="text-2xl font-bold text-white mb-6 text-center">Login to AlphaTrade</h2>
+        {error && <div className="bg-rose-500/10 text-rose-400 p-3 rounded-lg mb-4 text-sm text-center">{error}</div>}
+        <form className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Email</label>
+            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white" required />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Password</label>
+            <input type="password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white" required />
+          </div>
+          <div className="flex gap-4 mt-6">
+            <button onClick={handleLogin} disabled={loading} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg">Login</button>
+            <button onClick={handleSignup} disabled={loading} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 rounded-lg border border-slate-600">Sign Up</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const Tooltip = ({ term, beginnerMode, explanation, children }) => {
   if (!beginnerMode) return <span>{children}</span>;
   return (
@@ -350,14 +396,134 @@ const DecisionWidget = ({ data, lang, beginnerMode }) => {
   );
 };
 
-const WatchlistModal = ({ isOpen, onClose, lang, handleAnalyze }) => {
+const PortfolioModal = ({ isOpen, onClose, lang, handleAnalyze, session, portfolio, setPortfolio }) => {
   const t = T[lang];
-  const [watchlist, setWatchlist] = useState(getWatchlist());
+  const [symbol, setSymbol] = useState('');
+  const [qty, setQty] = useState('');
+  const [buyPrice, setBuyPrice] = useState('');
+  const [livePrices, setLivePrices] = useState({});
+
+  useEffect(() => {
+    if (!isOpen || !portfolio) return;
+    const fetchPrices = async () => {
+      const prices = {};
+      for (const item of portfolio) {
+        if (!prices[item.symbol]) {
+          const res = await fetchFinnhub(`/quote?symbol=${item.symbol}`);
+          if(res) prices[item.symbol] = res;
+        }
+      }
+      setLivePrices(prices);
+    };
+    fetchPrices();
+  }, [isOpen, portfolio]);
+
+  if (!isOpen) return null;
+
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    if (!symbol || !qty || !buyPrice || !session) return;
+    const s = symbol.toUpperCase();
+    
+    const { data, error } = await supabase.from('portfolios').insert({ 
+      user_id: session.user.id, 
+      symbol: s, 
+      qty: Number(qty), 
+      buy_price: Number(buyPrice) 
+    }).select();
+
+    if (data && data[0]) {
+      setPortfolio([...portfolio, data[0]]);
+      fetchFinnhub(`/quote?symbol=${s}`).then(res => setLivePrices(p => ({...p, [s]: res})));
+    }
+    
+    setSymbol(''); setQty(''); setBuyPrice('');
+  };
+
+  const handleRemove = async (id) => {
+    if (!session) return;
+    await supabase.from('portfolios').delete().eq('id', id).eq('user_id', session.user.id);
+    setPortfolio(portfolio.filter(x => x.id !== id));
+  };
+
+  let totalValue = 0;
+  let totalCost = 0;
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex justify-center items-center p-4" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <div className="bg-slate-900 border border-slate-700 p-6 rounded-2xl max-w-2xl w-full shadow-xl max-h-[90vh] flex flex-col">
+        <div className="flex justify-between items-center mb-6 shrink-0">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2"><Briefcase size={20} className="text-emerald-500" /> {t.portfolio}</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={20} /></button>
+        </div>
+
+        <form onSubmit={handleAdd} className="flex gap-2 mb-6 shrink-0">
+          <input type="text" value={symbol} onChange={e=>setSymbol(e.target.value)} placeholder="AAPL" className="w-24 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white uppercase" required dir="ltr"/>
+          <input type="number" step="any" value={qty} onChange={e=>setQty(e.target.value)} placeholder={t.qty} className="w-20 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white" required />
+          <input type="number" step="any" value={buyPrice} onChange={e=>setBuyPrice(e.target.value)} placeholder={t.buyPrice} className="w-28 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white" required />
+          <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 rounded-lg font-bold">{t.addStock}</button>
+        </form>
+
+        <div className="flex-1 overflow-y-auto space-y-2">
+          {portfolio.map(item => {
+            const live = livePrices[item.symbol];
+            const currentPrice = live ? live.c : item.buy_price;
+            const currentVal = item.qty * currentPrice;
+            const cost = item.qty * item.buy_price;
+            const pnl = currentVal - cost;
+            const pnlPct = cost > 0 ? (pnl / cost) * 100 : 0;
+            
+            totalValue += currentVal;
+            totalCost += cost;
+
+            return (
+              <div key={item.id} className="flex flex-wrap md:flex-nowrap justify-between items-center bg-slate-800/50 p-3 rounded-lg border border-slate-700 gap-4">
+                <div className="w-16 font-bold text-white text-lg" dir="ltr">{item.symbol}</div>
+                <div className="text-sm text-slate-400 w-20 text-center">
+                  <div className="text-[10px] uppercase">Qty / Buy</div>
+                  <div>{item.qty} @ ${item.buy_price}</div>
+                </div>
+                <div className="text-sm font-bold w-24 text-center">
+                  <div className="text-[10px] text-slate-400 uppercase font-normal">Live Price</div>
+                  <div className="text-white">${currentPrice.toFixed(2)}</div>
+                </div>
+                <div className={`text-sm font-bold w-24 text-center ${pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`} dir="ltr">
+                  <div className="text-[10px] uppercase text-slate-400 font-normal">P&L</div>
+                  {pnl >= 0 ? '+' : ''}{pnl.toFixed(2)} ({pnlPct.toFixed(2)}%)
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => { handleAnalyze(`Analyze my portfolio holding of ${item.symbol}. I bought ${item.qty} shares at $${item.buy_price}. How is it performing and what is your advice?`, item.symbol); onClose(); }} className="text-xs bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded text-white font-bold">{t.analyze}</button>
+                  <button onClick={() => handleRemove(item.id)} className="text-slate-500 hover:text-rose-400 p-2"><Trash2 size={16}/></button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {portfolio.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-slate-700 flex justify-between items-center text-sm shrink-0">
+            <span className="text-slate-400">{t.totalValue}</span>
+            <div className="text-right">
+              <div className="text-xl font-bold text-white">${totalValue.toFixed(2)}</div>
+              <div className={`font-bold ${totalValue >= totalCost ? 'text-emerald-400' : 'text-rose-400'}`} dir="ltr">
+                {totalValue >= totalCost ? '+' : ''}{(totalValue - totalCost).toFixed(2)} ({(totalCost > 0 ? ((totalValue - totalCost)/totalCost)*100 : 0).toFixed(2)}%)
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+
+const WatchlistModal = ({ isOpen, onClose, lang, handleAnalyze, session, watchlist, setWatchlist }) => {
+  const t = T[lang];
   const [symbol, setSymbol] = useState('');
   const [livePrices, setLivePrices] = useState({});
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !watchlist) return;
     const fetchPrices = async () => {
       const prices = {};
       for (const s of watchlist) {
@@ -371,22 +537,23 @@ const WatchlistModal = ({ isOpen, onClose, lang, handleAnalyze }) => {
 
   if (!isOpen) return null;
 
-  const handleAdd = () => {
-    if (!symbol) return;
+  const handleAdd = async () => {
+    if (!symbol || !session) return;
     const s = symbol.toUpperCase();
     if (!watchlist.includes(s)) {
       const nw = [...watchlist, s];
       setWatchlist(nw);
-      localStorage.setItem('alpha_watchlist', JSON.stringify(nw));
+      await supabase.from('watchlists').insert({ user_id: session.user.id, symbol: s });
       fetchFinnhub(`/quote?symbol=${s}`).then(res => setLivePrices(p => ({...p, [s]: res})));
     }
     setSymbol('');
   };
 
-  const handleRemove = (s) => {
+  const handleRemove = async (s) => {
+    if (!session) return;
     const nw = watchlist.filter(x => x !== s);
     setWatchlist(nw);
-    localStorage.setItem('alpha_watchlist', JSON.stringify(nw));
+    await supabase.from('watchlists').delete().eq('symbol', s).eq('user_id', session.user.id);
   };
 
   return (
@@ -429,6 +596,8 @@ const WatchlistModal = ({ isOpen, onClose, lang, handleAnalyze }) => {
 
 // --- Main Application ---
 export default function App() {
+  const [session, setSession] = useState(null);
+  
   const [lang, setLang] = useState('ar');
   const t = T[lang];
 
@@ -438,23 +607,64 @@ export default function App() {
   const [loadingStatus, setLoadingStatus] = useState('');
   
   const [geminiKey, setGeminiKey] = useState(getStoredGeminiKey());
-  const [beginnerMode, setBeginnerMode] = useState(getBeginnerMode());
+  const [beginnerMode, setBeginnerMode] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
-  const [isPortfolioOpen, setIsPortfolioOpen] = useState(false);
-  const [portfolio, setPortfolio] = useState(() => JSON.parse(localStorage.getItem('alpha_portfolio') || '[]'));
-  
   const [isWatchlistOpen, setIsWatchlistOpen] = useState(false);
+  const [watchlist, setWatchlist] = useState([]);
+
+  const [isPortfolioOpen, setIsPortfolioOpen] = useState(false);
+  const [portfolio, setPortfolio] = useState([]);
 
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    setMessages([{ id: 'welcome', role: 'assistant', content: t.welcome }]);
-  }, [lang, t.welcome]);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (session) {
+      // Fetch Watchlist
+      supabase.from('watchlists').select('symbol').eq('user_id', session.user.id).then(({data}) => {
+        if(data) setWatchlist(data.map(r => r.symbol));
+      });
+      // Fetch Portfolio
+      supabase.from('portfolios').select('*').eq('user_id', session.user.id).then(({data}) => {
+        if(data) setPortfolio(data);
+      });
+      // Fetch Profile (Beginner Mode)
+      supabase.from('profiles').select('beginner_mode').eq('id', session.user.id).single().then(({data}) => {
+        if(data && data.beginner_mode !== null) setBeginnerMode(data.beginner_mode);
+      });
+    }
+  }, [session]);
+
+  const handleSaveBeginnerMode = async (val) => {
+    setBeginnerMode(val);
+    if (session) {
+      await supabase.from('profiles').upsert({ id: session.user.id, beginner_mode: val });
+    }
+  };
+
+  useEffect(() => {
+    if (session && messages.length === 0) {
+       setMessages([{ id: 'welcome', role: 'assistant', content: t.welcome }]);
+    }
+  }, [lang, t.welcome, session, messages.length]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading, loadingStatus]);
+
+  if (!session) {
+    return <AuthScreen />;
+  }
 
   const handleSend = async (textToProcess = null, directSymbol = null) => {
     const prompt = textToProcess || input;
@@ -557,6 +767,7 @@ export default function App() {
             52: quote && rawData.metric ? { low: rawData.metric['52WeekLow'], high: rawData.metric['52WeekHigh'], price: quote.c } : null
           };
         }
+        
         setMessages(prev => [...prev, {
           id: Date.now().toString(),
           role: 'assistant',
@@ -608,7 +819,7 @@ export default function App() {
                 <input type="password" value={geminiKey} onChange={(e) => { setGeminiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value); }} className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white" dir="ltr" />
               </div>
               <label className="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" checked={beginnerMode} onChange={(e) => { setBeginnerMode(e.target.checked); localStorage.setItem('alpha_beginner_mode', e.target.checked); }} className="rounded bg-slate-900 border-slate-600 text-emerald-500 focus:ring-emerald-500/20" />
+                <input type="checkbox" checked={beginnerMode} onChange={(e) => handleSaveBeginnerMode(e.target.checked)} className="rounded bg-slate-900 border-slate-600 text-emerald-500 focus:ring-emerald-500/20" />
                 <span className="text-sm font-medium text-slate-300">{t.beginnerMode}</span>
               </label>
               <button onClick={() => setIsSettingsOpen(false)} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg">{t.save}</button>
@@ -617,8 +828,11 @@ export default function App() {
         </div>
       )}
 
+      {/* Portfolio Modal */}
+      <PortfolioModal isOpen={isPortfolioOpen} onClose={() => setIsPortfolioOpen(false)} lang={lang} handleAnalyze={(text, s) => handleSend(text, s)} session={session} portfolio={portfolio} setPortfolio={setPortfolio} />
+
       {/* Watchlist Modal */}
-      <WatchlistModal isOpen={isWatchlistOpen} onClose={() => setIsWatchlistOpen(false)} lang={lang} handleAnalyze={(s) => handleSend(null, s)} />
+      <WatchlistModal isOpen={isWatchlistOpen} onClose={() => setIsWatchlistOpen(false)} lang={lang} handleAnalyze={(s) => handleSend(null, s)} session={session} watchlist={watchlist} setWatchlist={setWatchlist} />
 
       {/* Main Area */}
       <div className="flex-1 flex flex-col relative overflow-hidden">
@@ -628,8 +842,10 @@ export default function App() {
              <div className="flex items-center gap-2 text-emerald-400 font-bold"><BrainCircuit size={20}/> {t.title}</div>
            </div>
            <div className="flex items-center gap-4">
+             <button onClick={() => setIsPortfolioOpen(true)} className="flex items-center gap-1 text-sm font-bold text-slate-400 hover:text-emerald-400"><Briefcase size={16}/> {t.portfolio}</button>
              <button onClick={() => setIsWatchlistOpen(true)} className="flex items-center gap-1 text-sm font-bold text-slate-400 hover:text-blue-500"><Eye size={16}/> {t.watchlist}</button>
              <button onClick={() => setIsSettingsOpen(true)} className="text-slate-400 hover:text-emerald-400"><Settings size={18} /></button>
+             <button onClick={() => supabase.auth.signOut()} title="Logout" className="text-slate-500 hover:text-rose-400 ml-2"><LogOut size={18} /></button>
            </div>
         </div>
 
