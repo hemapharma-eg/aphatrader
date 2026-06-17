@@ -7,6 +7,7 @@ import {
   ImagePlus, X
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { supabase } from './lib/supabase';
 import { NewsWidget } from './components/NewsWidget';
 import { AnalystWidget } from './components/AnalystWidget';
@@ -983,7 +984,7 @@ export default function App() {
                     )}
                     {msg.content && (
                       <div className={`text-sm leading-relaxed p-5 rounded-3xl break-words shadow-md ${msg.role === 'user' ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-tr-sm whitespace-pre-wrap' : 'glass-card text-slate-800 dark:text-slate-200 rounded-tl-sm prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-headings:font-heading prose-a:text-accent-teal prose-strong:text-slate-900 dark:prose-strong:text-white marker:text-navy-500 dark:marker:text-accent-teal'}`}>
-                        {msg.role === 'user' ? msg.content : <ReactMarkdown>{msg.content}</ReactMarkdown>}
+                        {msg.role === 'user' ? msg.content : <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>}
                       </div>
                     )}
                     {msg.decisionData && (
