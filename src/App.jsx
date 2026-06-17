@@ -130,76 +130,7 @@ const detectStockSymbol = (text) => {
 };
 
 // --- Scoring Logic ---
-const computeSignals = (data) => {
-  let signals = {
-    valuation: { score: 0, state: 'neutral', value: 'Unavailable', explanation: 'P/E data missing.' },
-    profitability: { score: 0, state: 'neutral', value: 'Unavailable', explanation: 'ROE data missing.' },
-    debt: { score: 0, state: 'neutral', value: 'Unavailable', explanation: 'Debt data missing.' },
-    pricePosition: { score: 0, state: 'neutral', value: 'Unavailable', explanation: 'Price range missing.' },
-    newsSentiment: { score: 0, state: 'neutral', value: 'Waiting...', explanation: '' } 
-  };
-
-  if (data.ratios?.priceToEarningsRatioTTM) {
-    const pe = data.ratios.priceToEarningsRatioTTM;
-    if (pe > 0 && pe < 15) signals.valuation = { score: 1, state: 'bullish', value: `P/E ${pe.toFixed(1)}`, explanation: 'Valuation is cheap relative to earnings.' };
-    else if (pe > 25 || pe <= 0) signals.valuation = { score: -1, state: 'bearish', value: `P/E ${pe.toFixed(1)}`, explanation: 'Valuation is expensive or earnings are negative.' };
-    else signals.valuation = { score: 0, state: 'neutral', value: `P/E ${pe.toFixed(1)}`, explanation: 'Valuation is average.' };
-  }
-
-  if (data.metrics?.returnOnEquityTTM) {
-    const roe = data.metrics.returnOnEquityTTM * 100;
-    if (roe > 15) signals.profitability = { score: 1, state: 'bullish', value: `ROE ${roe.toFixed(1)}%`, explanation: 'High return on shareholder equity.' };
-    else if (roe < 5) signals.profitability = { score: -1, state: 'bearish', value: `ROE ${roe.toFixed(1)}%`, explanation: 'Low or negative return on equity.' };
-    else signals.profitability = { score: 0, state: 'neutral', value: `ROE ${roe.toFixed(1)}%`, explanation: 'Average profitability.' };
-  }
-
-  if (data.ratios?.debtToEquityRatioTTM) {
-    const de = data.ratios.debtToEquityRatioTTM;
-    if (de < 0.5) signals.debt = { score: 1, state: 'bullish', value: `D/E ${de.toFixed(2)}`, explanation: 'Low debt compared to equity.' };
-    else if (de > 2.0) signals.debt = { score: -1, state: 'bearish', value: `D/E ${de.toFixed(2)}`, explanation: 'High debt burden.' };
-    else signals.debt = { score: 0, state: 'neutral', value: `D/E ${de.toFixed(2)}`, explanation: 'Moderate debt levels.' };
-  }
-
-  if (data.profile?.range && data.quote?.c) {
-    const parts = data.profile.range.split('-');
-    if (parts.length === 2) {
-      const low = parseFloat(parts[0]);
-      const high = parseFloat(parts[1]);
-      const p = data.quote.c;
-      const range = high - low;
-      if (range > 0) {
-        const pct = (p - low) / range;
-        if (pct <= 0.3) signals.pricePosition = { score: 1, state: 'bullish', value: 'Near 52w Low', explanation: 'Price is low compared to last year.' };
-        else if (pct >= 0.7) signals.pricePosition = { score: -1, state: 'bearish', value: 'Near 52w High', explanation: 'Price is high compared to last year.' };
-        else signals.pricePosition = { score: 0, state: 'neutral', value: 'Mid 52w Range', explanation: 'Price is in middle of its annual range.' };
-      }
-    }
-  }
-
-  return signals;
-};
-
-const getVerdict = (signals) => {
-  let score = 0;
-  let counts = { 1:0, '-1':0, 0:0 };
-  Object.values(signals).forEach(s => {
-    score += s.score;
-    counts[s.score]++;
-  });
-
-  const maxAgreed = Math.max(counts[1], counts['-1'], counts[0]);
-  let confidence = 'Low';
-  if (maxAgreed >= 4) confidence = 'High';
-  else if (maxAgreed === 3) confidence = 'Medium';
-
-  let verdict = 'HOLD';
-  if (score >= 3) verdict = 'BUY';
-  else if (score >= 1) verdict = 'WATCH';
-  else if (score <= -3) verdict = 'SELL';
-  else if (score <= -1) verdict = 'AVOID';
-
-  return { verdict, confidence, score };
-};
+// We now rely entirely on the AI to generate the dynamic signals, verdict, and confidence based on the context.
 
 // --- Components ---
 const AuthScreen = () => {
@@ -300,7 +231,7 @@ const DecisionChecklist = ({ type, lang }) => {
 
 const DecisionWidget = ({ data, lang, beginnerMode }) => {
   if (!data) return null;
-  const { verdict, confidence, fiveSignals, summary, risks, whatWouldChange, shariah, 52: range52 } = data;
+  const { verdict, confidence, signals = [], summary, risks, whatWouldChange, shariah, 52: range52 } = data;
   
   const colors = {
     BUY: 'bg-gradient-to-r from-navy-500 to-accent-teal text-white shadow-[0_0_20px_rgba(0,210,255,0.3)]',
@@ -348,12 +279,12 @@ const DecisionWidget = ({ data, lang, beginnerMode }) => {
       {/* Signals */}
       <div className="space-y-3 mb-8">
         <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-          5 Core Signals
-          {beginnerMode && <span className="text-[9px] text-navy-600 dark:text-accent-teal border border-navy-500/20 bg-navy-50 dark:bg-navy-500/10 px-2 py-0.5 rounded-full">Beginner</span>}
+          {lang === 'ar' ? 'المؤشرات الأساسية 4' : '4 Core Signals'}
+          {beginnerMode && <span className="text-[9px] text-navy-600 dark:text-accent-teal border border-navy-500/20 bg-navy-50 dark:bg-navy-500/10 px-2 py-0.5 rounded-full">{lang === 'ar' ? 'مبتدئ' : 'Beginner'}</span>}
         </h4>
         <div className="grid grid-cols-1 gap-2">
-          {Object.entries(fiveSignals).map(([key, sig]) => (
-            <div key={key} className="flex items-center gap-4 bg-white/50 dark:bg-slate-900/40 p-3 rounded-2xl border border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+          {signals.map((sig, i) => (
+            <div key={i} className="flex items-center gap-4 bg-white/50 dark:bg-slate-900/40 p-3 rounded-2xl border border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
               <div className="shrink-0 p-2 rounded-xl bg-slate-100 dark:bg-slate-950">
                 {sig.state === 'bullish' ? <CheckCircle2 size={18} className="text-navy-500 dark:text-accent-teal drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" /> : 
                  sig.state === 'bearish' ? <XCircle size={18} className="text-accent-coral dark:text-accent-coral drop-shadow-[0_0_8px_rgba(251,113,133,0.5)]" /> : 
@@ -361,8 +292,8 @@ const DecisionWidget = ({ data, lang, beginnerMode }) => {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 capitalize">
-                  <Tooltip term={key.replace(/([A-Z])/g, ' $1').trim()} beginnerMode={beginnerMode} explanation={sig.explanation}>
-                    {key.replace(/([A-Z])/g, ' $1').trim()}
+                  <Tooltip term={sig.name} beginnerMode={beginnerMode} explanation={sig.explanation}>
+                    {sig.name}
                   </Tooltip>
                 </div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{beginnerMode ? sig.explanation : sig.value}</div>
@@ -685,7 +616,7 @@ const WatchlistTab = ({ lang, handleAnalyze, session, watchlist, setWatchlist, s
 export default function App() {
   const [session, setSession] = useState(null);
   
-  const [lang, setLang] = useState('en');
+  const [lang, setLang] = useState('ar');
   const [theme, setTheme] = useState('light');
 
   useEffect(() => {
@@ -799,7 +730,6 @@ export default function App() {
         const news = newsRaw?.results || [];
 
         const rawData = { quote, profile, metrics, ratios, news };
-        const codeSignals = computeSignals(rawData);
 
         setLoadingStatus('Asking AI...');
 
@@ -809,22 +739,28 @@ export default function App() {
           Language: ${lang === 'ar' ? 'Arabic' : 'English'}.
           
           Stock: ${symbol}
+          Current Price: ${quote ? quote.c : 'N/A'}, Daily Change: ${quote ? quote.dp : 'N/A'}%
           Profile: ${profile.description}
-          Metrics Summary: P/E: ${ratios?.priceToEarningsRatioTTM?.toFixed(2)}, ROE: ${(metrics?.returnOnEquityTTM*100)?.toFixed(1)}%, D/E: ${ratios?.debtToEquityRatioTTM?.toFixed(2)}
           Recent News Headlines: ${news?.slice(0,5).map(n => n.title).join(' | ')}
           
           TASK: Create a JSON response. 
           Provide 'message' (a short greeting).
           Provide 'decisionCard' containing:
-          - newsSentiment: (bullish/bearish/neutral based on headlines)
-          - newsExplanation: (short reason)
           - summary: (1 sentence beginner summary of the stock's current situation)
+          - signals: (Array of 4 objects analyzing the stock based on available data. Each object must have:
+              - name: String (e.g. Price Momentum, News Sentiment, Volume Activity)
+              - state: 'bullish' | 'bearish' | 'neutral'
+              - value: String (e.g. "+5% today" or "Positive News")
+              - explanation: String (short reason)
+            )
+          - verdict: 'BUY' | 'SELL' | 'HOLD' | 'WATCH' | 'AVOID'
+          - confidence: 'High' | 'Medium' | 'Low'
           - risks: (array of 2-4 strings, simple risks)
           - whatWouldChange: (array of 1-2 strings, what would change the verdict)
           - shariah: { compliant: boolean, reason: string, alternative: string } 
-            (Assess strictly on business activity based on AAOIFI Shariah standards. Ignore raw totalDebtToEquityQuarterly metric. Flag extremely obvious high-debt or non-compliant business sectors like alcohol/banking/pork.)
+            (Assess strictly on business activity based on AAOIFI Shariah standards. Flag non-compliant business sectors like alcohol/banking/pork.)
           
-          Ensure all strings are in ${lang === 'ar' ? 'Arabic' : 'English'}.
+          Ensure all strings inside the JSON are in ${lang === 'ar' ? 'Arabic' : 'English'}.
           NO markdown fences. Pure JSON.
         `;
 
@@ -849,21 +785,11 @@ export default function App() {
         }
 
         if (aiData.decisionCard) {
-          const aiSent = aiData.decisionCard.newsSentiment?.toLowerCase() || 'neutral';
-          codeSignals.newsSentiment = {
-            score: aiSent === 'bullish' ? 1 : aiSent === 'bearish' ? -1 : 0,
-            state: aiSent,
-            value: aiData.decisionCard.newsSentiment,
-            explanation: aiData.decisionCard.newsExplanation || 'Sentiment derived from recent news.'
-          };
-
-          const verdictObj = getVerdict(codeSignals);
-
           cardData = {
-            verdict: verdictObj.verdict,
-            confidence: verdictObj.confidence,
+            verdict: aiData.decisionCard.verdict || 'HOLD',
+            confidence: aiData.decisionCard.confidence || 'Medium',
             summary: aiData.decisionCard.summary,
-            fiveSignals: codeSignals,
+            signals: aiData.decisionCard.signals || [],
             risks: aiData.decisionCard.risks,
             whatWouldChange: aiData.decisionCard.whatWouldChange,
             shariah: aiData.decisionCard.shariah,
