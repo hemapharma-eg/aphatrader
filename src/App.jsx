@@ -423,13 +423,24 @@ const PortfolioTab = ({ lang, handleAnalyze, session, portfolio, setPortfolio, s
     const fetchPrices = async () => {
       const symbols = portfolio.map(p => p.symbol);
       const { data } = await supabase.from('stock_analyses').select('symbol, last_price, change_pct').in('symbol', symbols);
+      const prices = {};
+      const cachedSymbols = [];
       if (data) {
-        const prices = {};
         data.forEach(row => {
           prices[row.symbol] = { c: row.last_price, dp: row.change_pct };
+          cachedSymbols.push(row.symbol);
         });
-        setLivePrices(prices);
       }
+      // Fallback: Populate cache for missing symbols
+      const missingSymbols = symbols.filter(s => !cachedSymbols.includes(s));
+      for (const s of missingSymbols) {
+        const res = await getLivePrice(s);
+        if (res) {
+          prices[s] = res;
+          await supabase.from('stock_analyses').upsert({ symbol: s, last_price: res.c, change_pct: res.dp });
+        }
+      }
+      setLivePrices(prices);
     };
     fetchPrices();
   }, [portfolio]);
@@ -569,13 +580,24 @@ const WatchlistTab = ({ lang, handleAnalyze, session, watchlist, setWatchlist, s
     if (!watchlist || watchlist.length === 0) return;
     const fetchPrices = async () => {
       const { data } = await supabase.from('stock_analyses').select('symbol, last_price, change_pct').in('symbol', watchlist);
+      const prices = {};
+      const cachedSymbols = [];
       if (data) {
-        const prices = {};
         data.forEach(row => {
           prices[row.symbol] = { c: row.last_price, dp: row.change_pct };
+          cachedSymbols.push(row.symbol);
         });
-        setLivePrices(prices);
       }
+      // Fallback: Populate cache for missing symbols
+      const missingSymbols = watchlist.filter(s => !cachedSymbols.includes(s));
+      for (const s of missingSymbols) {
+        const res = await getLivePrice(s);
+        if (res) {
+          prices[s] = res;
+          await supabase.from('stock_analyses').upsert({ symbol: s, last_price: res.c, change_pct: res.dp });
+        }
+      }
+      setLivePrices(prices);
     };
     fetchPrices();
   }, [watchlist]);
