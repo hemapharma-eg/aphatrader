@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { supabase } from './lib/supabase';
+import { NewsWidget } from './components/NewsWidget';
+import { AnalystWidget } from './components/AnalystWidget';
 
 // --- API Keys ---
 const POLYGON_API_KEY = "tdvJPbi2C7T2NpXrxLD5jb0Mq48GEY9I";
@@ -507,31 +509,48 @@ const WatchlistTab = ({ lang, handleAnalyze, session, watchlist, setWatchlist, s
   const [symbol, setSymbol] = useState('');
   const [livePrices, setLivePrices] = useState({});
 
-  useEffect(() => {
+  const fetchPrices = async () => {
     if (!watchlist || watchlist.length === 0) return;
-    const fetchPrices = async () => {
-      const { data } = await supabase.from('stock_analyses').select('symbol, last_price, change_pct').in('symbol', watchlist);
-      const prices = {};
-      const cachedSymbols = [];
-      if (data) {
-        data.forEach(row => {
-          prices[row.symbol] = { c: row.last_price, dp: row.change_pct };
-          cachedSymbols.push(row.symbol);
-        });
+    const { data } = await supabase.from('stock_analyses').select('symbol, last_price, change_pct').in('symbol', watchlist);
+    const prices = {};
+    const cachedSymbols = [];
+    if (data) {
+      data.forEach(row => {
+        prices[row.symbol] = { c: row.last_price, dp: row.change_pct };
+        cachedSymbols.push(row.symbol);
+      });
+    }
+    // Fallback: Populate cache for missing symbols
+    const missingSymbols = watchlist.filter(s => !cachedSymbols.includes(s));
+    for (const s of missingSymbols) {
+      const res = await getLivePrice(s);
+      if (res) {
+        prices[s] = res;
+        await supabase.from('stock_analyses').upsert({ symbol: s, last_price: res.c, change_pct: res.dp });
       }
-      // Fallback: Populate cache for missing symbols
-      const missingSymbols = watchlist.filter(s => !cachedSymbols.includes(s));
-      for (const s of missingSymbols) {
-        const res = await getLivePrice(s);
-        if (res) {
-          prices[s] = res;
-          await supabase.from('stock_analyses').upsert({ symbol: s, last_price: res.c, change_pct: res.dp });
-        }
-      }
-      setLivePrices(prices);
-    };
+    }
+    setLivePrices(prices);
+  };
+
+  useEffect(() => {
     fetchPrices();
   }, [watchlist]);
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const handleRefresh = async () => {
+    if (!watchlist || watchlist.length === 0) return;
+    setIsRefreshing(true);
+    const prices = { ...livePrices };
+    for (const s of watchlist) {
+      const res = await getLivePrice(s);
+      if (res) {
+        prices[s] = res;
+        await supabase.from('stock_analyses').upsert({ symbol: s, last_price: res.c, change_pct: res.dp });
+      }
+    }
+    setLivePrices(prices);
+    setIsRefreshing(false);
+  };
 
   const handleAdd = async (e) => {
     e.preventDefault();
@@ -565,9 +584,19 @@ const WatchlistTab = ({ lang, handleAnalyze, session, watchlist, setWatchlist, s
 
   return (
     <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      <h2 className="text-3xl font-heading font-bold text-slate-800 dark:text-white mb-8 flex items-center gap-3 drop-shadow-md">
-        <Eye size={28} className="text-blue-500 dark:text-blue-400" /> {t.watchlist}
-      </h2>
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-3xl font-heading font-bold text-slate-800 dark:text-white flex items-center gap-3 drop-shadow-md">
+          <Eye size={28} className="text-blue-500 dark:text-blue-400" /> {t.watchlist}
+        </h2>
+        <button 
+          onClick={handleRefresh} 
+          disabled={isRefreshing}
+          className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-white rounded-xl font-bold transition-colors disabled:opacity-50"
+        >
+          <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+          <span className="text-sm">{lang === 'ar' ? 'تحديث الأسعار' : 'Refresh'}</span>
+        </button>
+      </div>
 
       <div className="glass-panel p-6 rounded-3xl mb-8">
         <form onSubmit={handleAdd} className="flex gap-4">
@@ -759,6 +788,10 @@ export default function App() {
           - whatWouldChange: (array of 1-2 strings, what would change the verdict)
           - shariah: { compliant: boolean, reason: string, alternative: string } 
             (Assess strictly on business activity based on AAOIFI Shariah standards. Flag non-compliant business sectors like alcohol/banking/pork.)
+          - forecast: {
+              analystRatings: { strongBuy: number, buy: number, hold: number, sell: number, strongSell: number },
+              priceTargets: { min: number, avg: number, max: number }
+            } (Provide realistic estimates for these values based on current market sentiment. Make the sum of analysts between 15 and 40)
           
           Ensure all strings inside the JSON are in ${lang === 'ar' ? 'Arabic' : 'English'}.
           NO markdown fences. Pure JSON.
@@ -797,7 +830,10 @@ export default function App() {
               low: parseFloat(profile.range.split('-')[0]), 
               high: parseFloat(profile.range.split('-')[1]), 
               price: quote.c 
-            } : null
+            } : null,
+            forecast: aiData.decisionCard.forecast || null,
+            news: news || [],
+            currentPrice: quote ? quote.c : 0
           };
 
           // --- Caching Layer Upsert ---
@@ -916,7 +952,13 @@ export default function App() {
                         {msg.role === 'user' ? msg.content : <ReactMarkdown>{msg.content}</ReactMarkdown>}
                       </div>
                     )}
-                    {msg.decisionData && <DecisionWidget data={msg.decisionData} lang={lang} beginnerMode={beginnerMode} />}
+                    {msg.decisionData && (
+                      <div className="flex flex-col gap-4 w-full">
+                        <DecisionWidget data={msg.decisionData} lang={lang} beginnerMode={beginnerMode} />
+                        <AnalystWidget forecast={msg.decisionData.forecast} currentPrice={msg.decisionData.currentPrice} lang={lang} />
+                        <NewsWidget news={msg.decisionData.news} lang={lang} />
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
