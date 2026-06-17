@@ -696,7 +696,6 @@ export default function App() {
         body: JSON.stringify({
           contents,
           systemInstruction: { parts: [{ text: systemInstruction }] },
-          tools: [{ google_search: {} }],
           generationConfig: { responseMimeType: "application/json", responseSchema: schema }
         })
       });
