@@ -1,15 +1,14 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Send, BrainCircuit, TrendingUp, TrendingDown, Newspaper, 
-  AlertCircle, Activity, Bot, User, Sparkles, CalendarDays, 
-  LineChart as ChartIcon, Zap, Mic, MicOff, Volume2, Globe, Image as ImageIcon, X,
-  Settings, Briefcase, Plus, Trash2, CheckCircle2, XCircle, MinusCircle, HelpCircle, RefreshCw, Eye, LogOut
+  Send, BrainCircuit, AlertCircle, Bot, User, 
+  X, Settings, Briefcase, Trash2, CheckCircle2, 
+  XCircle, MinusCircle, RefreshCw, Eye, LogOut, Globe
 } from 'lucide-react';
 import { supabase } from './lib/supabase';
 
 // --- API Keys ---
-// TODO: Move Finnhub API key to environment variable or backend proxy before production.
-const FINNHUB_API_KEY = "d8pb0h9r01qgoi5hni8gd8pb0h9r01qgoi5hni90";
+const POLYGON_API_KEY = "tdvJPbi2C7T2NpXrxLD5jb0Mq48GEY9I";
+const FMP_API_KEY = "wY6xAsF8U0lIZrphQ1ooZh5MzA5Igu6O";
 const getStoredGeminiKey = () => localStorage.getItem('gemini_api_key') || '';
 
 // --- Translations ---
@@ -83,19 +82,34 @@ const T = {
 };
 
 // --- Utilities ---
-const fetchFinnhub = async (endpoint) => {
+const fetchPolygon = async (endpoint) => {
   try {
-    const url = `https://finnhub.io/api/v1${endpoint}&token=${FINNHUB_API_KEY}`;
+    const url = `https://api.polygon.io${endpoint}${endpoint.includes('?') ? '&' : '?'}apiKey=${POLYGON_API_KEY}`;
     const response = await fetch(url);
     if (!response.ok) return null;
     return await response.json();
   } catch(e) { return null; }
 };
 
-const daysAgo = (days) => {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toISOString().split('T')[0];
+const fetchFMP = async (endpoint) => {
+  try {
+    const url = `https://financialmodelingprep.com/stable${endpoint}${endpoint.includes('?') ? '&' : '?'}apikey=${FMP_API_KEY}`;
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    return await response.json();
+  } catch(e) { return null; }
+};
+
+const getLivePrice = async (symbol) => {
+  const res = await fetchPolygon(`/v2/aggs/ticker/${symbol}/prev?adjusted=true`);
+  if (!res || !res.results || !res.results[0]) return null;
+  const data = res.results[0];
+  return {
+    c: data.c,
+    h: data.h,
+    l: data.l,
+    dp: data.o ? ((data.c - data.o) / data.o) * 100 : 0
+  };
 };
 
 const detectStockSymbol = (text) => {
@@ -118,41 +132,39 @@ const detectStockSymbol = (text) => {
 // --- Scoring Logic ---
 const computeSignals = (data) => {
   let signals = {
-    analyst: { score: 0, state: 'neutral', value: 'Unavailable', explanation: 'Analyst data missing.' },
-    earnings: { score: 0, state: 'neutral', value: 'Unavailable', explanation: 'Earnings data missing.' },
     valuation: { score: 0, state: 'neutral', value: 'Unavailable', explanation: 'P/E data missing.' },
-    pricePosition: { score: 0, state: 'neutral', value: 'Unavailable', explanation: '52w range missing.' },
+    profitability: { score: 0, state: 'neutral', value: 'Unavailable', explanation: 'ROE data missing.' },
+    debt: { score: 0, state: 'neutral', value: 'Unavailable', explanation: 'Debt data missing.' },
+    pricePosition: { score: 0, state: 'neutral', value: 'Unavailable', explanation: 'Price range missing.' },
     newsSentiment: { score: 0, state: 'neutral', value: 'Waiting...', explanation: '' } 
   };
 
-  if (data.recommendation && data.recommendation.length > 0) {
-    const rec = data.recommendation[0];
-    const bulls = (rec.strongBuy || 0) + (rec.buy || 0);
-    const bears = (rec.sell || 0) + (rec.strongSell || 0);
-    if (bulls > bears) signals.analyst = { score: 1, state: 'bullish', value: `${bulls} Buy vs ${bears} Sell`, explanation: 'More analysts say buy.' };
-    else if (bears > bulls) signals.analyst = { score: -1, state: 'bearish', value: `${bears} Sell vs ${bulls} Buy`, explanation: 'More analysts say sell.' };
-    else signals.analyst = { score: 0, state: 'neutral', value: `Mixed (${bulls}/${bears})`, explanation: 'Analysts are divided.' };
+  if (data.ratios?.priceToEarningsRatioTTM) {
+    const pe = data.ratios.priceToEarningsRatioTTM;
+    if (pe > 0 && pe < 15) signals.valuation = { score: 1, state: 'bullish', value: `P/E ${pe.toFixed(1)}`, explanation: 'Valuation is cheap relative to earnings.' };
+    else if (pe > 25 || pe <= 0) signals.valuation = { score: -1, state: 'bearish', value: `P/E ${pe.toFixed(1)}`, explanation: 'Valuation is expensive or earnings are negative.' };
+    else signals.valuation = { score: 0, state: 'neutral', value: `P/E ${pe.toFixed(1)}`, explanation: 'Valuation is average.' };
   }
 
-  if (data.earnings && data.earnings.length > 0) {
-    let beats = 0, misses = 0;
-    data.earnings.forEach(e => { if(e.actual > e.estimate) beats++; else if (e.actual < e.estimate) misses++; });
-    if (beats > misses) signals.earnings = { score: 1, state: 'bullish', value: `${beats} Beats, ${misses} Misses`, explanation: 'Company frequently beats targets.' };
-    else if (misses > beats) signals.earnings = { score: -1, state: 'bearish', value: `${misses} Misses, ${beats} Beats`, explanation: 'Company frequently misses targets.' };
-    else signals.earnings = { score: 0, state: 'neutral', value: `Mixed (${beats}/${misses})`, explanation: 'Mixed track record.' };
+  if (data.metrics?.returnOnEquityTTM) {
+    const roe = data.metrics.returnOnEquityTTM * 100;
+    if (roe > 15) signals.profitability = { score: 1, state: 'bullish', value: `ROE ${roe.toFixed(1)}%`, explanation: 'High return on shareholder equity.' };
+    else if (roe < 5) signals.profitability = { score: -1, state: 'bearish', value: `ROE ${roe.toFixed(1)}%`, explanation: 'Low or negative return on equity.' };
+    else signals.profitability = { score: 0, state: 'neutral', value: `ROE ${roe.toFixed(1)}%`, explanation: 'Average profitability.' };
   }
 
-  if (data.metric) {
-    const pe = data.metric.peExclExtraTTM || data.metric.peBasicExclExtraTTM;
-    if (pe) {
-      if (pe < 15) signals.valuation = { score: 1, state: 'bullish', value: `P/E ${pe.toFixed(1)}`, explanation: 'Value is considered cheap.' };
-      else if (pe > 25) signals.valuation = { score: -1, state: 'bearish', value: `P/E ${pe.toFixed(1)}`, explanation: 'Value is considered expensive.' };
-      else signals.valuation = { score: 0, state: 'neutral', value: `P/E ${pe.toFixed(1)}`, explanation: 'Value is considered fair.' };
-    }
-    
-    const high = data.metric['52WeekHigh'];
-    const low = data.metric['52WeekLow'];
-    if (data.quote && high && low) {
+  if (data.ratios?.debtToEquityRatioTTM) {
+    const de = data.ratios.debtToEquityRatioTTM;
+    if (de < 0.5) signals.debt = { score: 1, state: 'bullish', value: `D/E ${de.toFixed(2)}`, explanation: 'Low debt compared to equity.' };
+    else if (de > 2.0) signals.debt = { score: -1, state: 'bearish', value: `D/E ${de.toFixed(2)}`, explanation: 'High debt burden.' };
+    else signals.debt = { score: 0, state: 'neutral', value: `D/E ${de.toFixed(2)}`, explanation: 'Moderate debt levels.' };
+  }
+
+  if (data.profile?.range && data.quote?.c) {
+    const parts = data.profile.range.split('-');
+    if (parts.length === 2) {
+      const low = parseFloat(parts[0]);
+      const high = parseFloat(parts[1]);
       const p = data.quote.c;
       const range = high - low;
       if (range > 0) {
@@ -409,7 +421,7 @@ const PortfolioModal = ({ isOpen, onClose, lang, handleAnalyze, session, portfol
       const prices = {};
       for (const item of portfolio) {
         if (!prices[item.symbol]) {
-          const res = await fetchFinnhub(`/quote?symbol=${item.symbol}`);
+          const res = await getLivePrice(item.symbol);
           if(res) prices[item.symbol] = res;
         }
       }
@@ -425,16 +437,13 @@ const PortfolioModal = ({ isOpen, onClose, lang, handleAnalyze, session, portfol
     if (!symbol || !qty || !buyPrice || !session) return;
     const s = symbol.toUpperCase();
     
-    const { data, error } = await supabase.from('portfolios').insert({ 
-      user_id: session.user.id, 
-      symbol: s, 
-      qty: Number(qty), 
-      buy_price: Number(buyPrice) 
+    const { data } = await supabase.from('portfolios').insert({ 
+      user_id: session.user.id, symbol: s, qty: Number(qty), buy_price: Number(buyPrice) 
     }).select();
 
     if (data && data[0]) {
       setPortfolio([...portfolio, data[0]]);
-      fetchFinnhub(`/quote?symbol=${s}`).then(res => setLivePrices(p => ({...p, [s]: res})));
+      getLivePrice(s).then(res => setLivePrices(p => ({...p, [s]: res})));
     }
     
     setSymbol(''); setQty(''); setBuyPrice('');
@@ -527,7 +536,7 @@ const WatchlistModal = ({ isOpen, onClose, lang, handleAnalyze, session, watchli
     const fetchPrices = async () => {
       const prices = {};
       for (const s of watchlist) {
-        const res = await fetchFinnhub(`/quote?symbol=${s}`);
+        const res = await getLivePrice(s);
         if(res) prices[s] = res;
       }
       setLivePrices(prices);
@@ -544,7 +553,7 @@ const WatchlistModal = ({ isOpen, onClose, lang, handleAnalyze, session, watchli
       const nw = [...watchlist, s];
       setWatchlist(nw);
       await supabase.from('watchlists').insert({ user_id: session.user.id, symbol: s });
-      fetchFinnhub(`/quote?symbol=${s}`).then(res => setLivePrices(p => ({...p, [s]: res})));
+      getLivePrice(s).then(res => setLivePrices(p => ({...p, [s]: res})));
     }
     setSymbol('');
   };
@@ -630,15 +639,12 @@ export default function App() {
 
   useEffect(() => {
     if (session) {
-      // Fetch Watchlist
       supabase.from('watchlists').select('symbol').eq('user_id', session.user.id).then(({data}) => {
         if(data) setWatchlist(data.map(r => r.symbol));
       });
-      // Fetch Portfolio
       supabase.from('portfolios').select('*').eq('user_id', session.user.id).then(({data}) => {
         if(data) setPortfolio(data);
       });
-      // Fetch Profile (Beginner Mode)
       supabase.from('profiles').select('beginner_mode').eq('id', session.user.id).single().then(({data}) => {
         if(data && data.beginner_mode !== null) setBeginnerMode(data.beginner_mode);
       });
@@ -680,22 +686,26 @@ export default function App() {
     }
 
     setIsLoading(true);
-    setLoadingStatus('Gathering signals...');
+    setLoadingStatus('Gathering signals from FMP & Polygon...');
 
     try {
       let cardData = null;
       if (symbol) {
         setLoadingStatus(`Fetching ${symbol} data...`);
-        const [quote, metric, rec, earn, news, profile] = await Promise.all([
-          fetchFinnhub(`/quote?symbol=${symbol}`),
-          fetchFinnhub(`/stock/metric?symbol=${symbol}&metric=all`),
-          fetchFinnhub(`/stock/recommendation?symbol=${symbol}`),
-          fetchFinnhub(`/stock/earnings?symbol=${symbol}`),
-          fetchFinnhub(`/company-news?symbol=${symbol}&from=${daysAgo(14)}&to=${daysAgo(0)}`),
-          fetchFinnhub(`/stock/profile2?symbol=${symbol}`)
+        const [quote, profileRaw, metricsRaw, ratiosRaw, newsRaw] = await Promise.all([
+          getLivePrice(symbol),
+          fetchFMP(`/profile?symbol=${symbol}`),
+          fetchFMP(`/key-metrics-ttm?symbol=${symbol}`),
+          fetchFMP(`/ratios-ttm?symbol=${symbol}`),
+          fetchPolygon(`/v2/reference/news?ticker=${symbol}&limit=5`)
         ]);
 
-        const rawData = { quote, metric: metric?.metric, recommendation: rec, earnings: earn, news, profile };
+        const profile = profileRaw?.[0] || {};
+        const metrics = metricsRaw?.[0] || {};
+        const ratios = ratiosRaw?.[0] || {};
+        const news = newsRaw?.results || [];
+
+        const rawData = { quote, profile, metrics, ratios, news };
         const codeSignals = computeSignals(rawData);
 
         setLoadingStatus('Asking AI...');
@@ -706,9 +716,9 @@ export default function App() {
           Language: ${lang === 'ar' ? 'Arabic' : 'English'}.
           
           Stock: ${symbol}
-          Profile: ${JSON.stringify(profile)}
-          Metrics Summary: P/E ${rawData.metric?.peExclExtraTTM}, Debt/Equity ${rawData.metric?.totalDebtToEquityQuarterly}
-          Recent News Headlines: ${news?.slice(0,5).map(n => n.headline).join(' | ')}
+          Profile: ${profile.description}
+          Metrics Summary: P/E: ${ratios?.priceToEarningsRatioTTM?.toFixed(2)}, ROE: ${(metrics?.returnOnEquityTTM*100)?.toFixed(1)}%, D/E: ${ratios?.debtToEquityRatioTTM?.toFixed(2)}
+          Recent News Headlines: ${news?.slice(0,5).map(n => n.title).join(' | ')}
           
           TASK: Create a JSON response. 
           Provide 'message' (a short greeting).
@@ -764,7 +774,11 @@ export default function App() {
             risks: aiData.decisionCard.risks,
             whatWouldChange: aiData.decisionCard.whatWouldChange,
             shariah: aiData.decisionCard.shariah,
-            52: quote && rawData.metric ? { low: rawData.metric['52WeekLow'], high: rawData.metric['52WeekHigh'], price: quote.c } : null
+            52: profile?.range && quote ? { 
+              low: parseFloat(profile.range.split('-')[0]), 
+              high: parseFloat(profile.range.split('-')[1]), 
+              price: quote.c 
+            } : null
           };
         }
         
