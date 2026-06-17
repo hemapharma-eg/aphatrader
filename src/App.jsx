@@ -3,7 +3,8 @@ import {
   Send, BrainCircuit, AlertCircle, Bot, User, 
   Settings, Briefcase, Trash2, CheckCircle2, 
   XCircle, MinusCircle, RefreshCw, Eye, LogOut, Globe,
-  MessageSquare, ChevronRight, ChevronLeft, LayoutDashboard, TrendingUp, Sun, Moon
+  MessageSquare, ChevronRight, ChevronLeft, LayoutDashboard, TrendingUp, Sun, Moon,
+  ImagePlus, X
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { supabase } from './lib/supabase';
@@ -663,6 +664,10 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState('');
   
+  const [imageBase64, setImageBase64] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const fileInputRef = useRef(null);
+  
   const [geminiKey, setGeminiKey] = useState(getStoredGeminiKey());
   const [beginnerMode, setBeginnerMode] = useState(true);
   
@@ -702,6 +707,17 @@ export default function App() {
     }
   };
 
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setImageBase64(event.target.result.split(',')[1]);
+      setImagePreview(event.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
   useEffect(() => {
     if (session && messages.length === 0) {
        setMessages([{ id: 'welcome', role: 'assistant', content: T[lang].welcome }]);
@@ -720,14 +736,19 @@ export default function App() {
 
   const handleSend = async (textToProcess = null, directSymbol = null) => {
     const prompt = textToProcess || input;
-    if (!prompt.trim() && !directSymbol) return;
+    if (!prompt.trim() && !imageBase64 && !directSymbol) return;
 
     if (!geminiKey) { setActiveTab('settings'); return; }
 
     const symbol = directSymbol || detectStockSymbol(prompt);
     
+    const currentImgBase64 = imageBase64;
+    const currentImgPreview = imagePreview;
+    setImageBase64(null);
+    setImagePreview(null);
+    
     if (!directSymbol) {
-      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', content: prompt }]);
+      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', content: prompt, imagePreview: currentImgPreview }]);
       setInput('');
     }
 
@@ -797,11 +818,16 @@ export default function App() {
           NO markdown fences. Pure JSON.
         `;
 
+        const userParts = [{ text: "Evaluate the data and provide the JSON object." }];
+        if (currentImgBase64) {
+          userParts.push({ inlineData: { data: currentImgBase64, mimeType: "image/jpeg" } });
+        }
+
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${geminiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: "Evaluate the data and provide the JSON object." }] }],
+            contents: [{ role: 'user', parts: userParts }],
             systemInstruction: { parts: [{ text: systemInstruction }] },
             generationConfig: { responseMimeType: "application/json" }
           })
@@ -859,12 +885,17 @@ export default function App() {
         const marketNews = marketNewsRaw?.results || [];
         const newsContext = marketNews.map(n => `- ${n.title} (Tickers: ${n.tickers?.join(', ') || 'General'})`).join('\n');
 
+        const userParts = [{ text: prompt }];
+        if (currentImgBase64) {
+          userParts.push({ inlineData: { data: currentImgBase64, mimeType: "image/jpeg" } });
+        }
+
         setLoadingStatus('Asking AI...');
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${geminiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            contents: [{ role: 'user', parts: userParts }],
             systemInstruction: { parts: [{ text: `You are a premium AI financial analyst. Provide highly informative, data-driven answers with discussion and market predictions based on the latest context. Do NOT tell the user to use other apps or websites; provide the best possible analysis yourself. 
             
             LATEST MARKET NEWS:
@@ -947,6 +978,9 @@ export default function App() {
                     {msg.role === 'user' ? <User size={20} /> : <Bot size={20} />}
                   </div>
                   <div className={`flex flex-col gap-2 min-w-0 flex-1 ${msg.role === 'user' ? (lang === 'ar' ? 'items-start' : 'items-end') : 'items-start'}`}>
+                    {msg.imagePreview && (
+                      <img src={msg.imagePreview} className="max-h-48 rounded-2xl mb-2 shadow-sm border border-slate-200/50" alt="Uploaded by user" />
+                    )}
                     {msg.content && (
                       <div className={`text-sm leading-relaxed p-5 rounded-3xl break-words shadow-md ${msg.role === 'user' ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-tr-sm whitespace-pre-wrap' : 'glass-card text-slate-800 dark:text-slate-200 rounded-tl-sm prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-headings:font-heading prose-a:text-accent-teal prose-strong:text-slate-900 dark:prose-strong:text-white marker:text-navy-500 dark:marker:text-accent-teal'}`}>
                         {msg.role === 'user' ? msg.content : <ReactMarkdown>{msg.content}</ReactMarkdown>}
@@ -975,17 +1009,29 @@ export default function App() {
 
             {/* Input */}
             <div className="p-4 sm:p-6 bg-white/80 dark:bg-slate-900/80 border-t border-slate-200 dark:border-white/5 backdrop-blur-xl shrink-0">
-              <div className="max-w-4xl mx-auto relative flex items-center">
-                 <input
-                   value={input}
-                   onChange={(e) => setInput(e.target.value)}
-                   onKeyDown={(e) => { if (e.key === 'Enter') handleSend(); }}
-                   placeholder={T[lang].inputPlaceholder}
-                   className="w-full bg-slate-100/50 dark:bg-slate-950/50 border border-slate-300 dark:border-white/10 rounded-2xl px-6 py-4 text-base text-slate-800 dark:text-white focus:outline-none focus:border-navy-500/50 focus:ring-1 focus:ring-navy-500/50 pr-16 shadow-inner transition-all"
-                 />
-                 <button onClick={() => handleSend()} disabled={isLoading} className={`absolute ${lang === 'ar' ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 p-3 bg-navy-600 hover:bg-navy-500 text-white rounded-xl disabled:opacity-50 transition-colors shadow-lg`}>
-                   <Send size={20} className={lang === 'ar' ? 'rotate-180' : ''}/>
+              {imagePreview && (
+                <div className="max-w-4xl mx-auto mb-3 relative inline-block">
+                  <img src={imagePreview} className="h-16 rounded-xl shadow-md border border-slate-200 dark:border-white/10" alt="Preview" />
+                  <button onClick={() => { setImagePreview(null); setImageBase64(null); }} className="absolute -top-2 -right-2 bg-slate-800 text-white rounded-full p-1 hover:bg-slate-700 transition-colors shadow-lg"><X size={12} /></button>
+                </div>
+              )}
+              <div className="max-w-4xl mx-auto relative flex items-center gap-2">
+                 <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleImageSelect} />
+                 <button onClick={() => fileInputRef.current?.click()} className="p-4 text-slate-400 hover:text-navy-500 dark:hover:text-accent-teal transition-colors bg-slate-100 dark:bg-slate-800 rounded-2xl flex-shrink-0">
+                   <ImagePlus size={20} />
                  </button>
+                 <div className="relative flex-1">
+                   <input
+                     value={input}
+                     onChange={(e) => setInput(e.target.value)}
+                     onKeyDown={(e) => { if (e.key === 'Enter') handleSend(); }}
+                     placeholder={T[lang].inputPlaceholder}
+                     className="w-full bg-slate-100/50 dark:bg-slate-950/50 border border-slate-300 dark:border-white/10 rounded-2xl px-6 py-4 text-base text-slate-800 dark:text-white focus:outline-none focus:border-navy-500/50 focus:ring-1 focus:ring-navy-500/50 pr-16 shadow-inner transition-all"
+                   />
+                   <button onClick={() => handleSend()} disabled={isLoading} className={`absolute ${lang === 'ar' ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 p-3 bg-navy-600 hover:bg-navy-500 text-white rounded-xl disabled:opacity-50 transition-colors shadow-lg`}>
+                     <Send size={20} className={lang === 'ar' ? 'rotate-180' : ''}/>
+                   </button>
+                 </div>
               </div>
               <div className="max-w-4xl mx-auto mt-3 text-center text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-bold">{T[lang].disclaimer}</div>
             </div>

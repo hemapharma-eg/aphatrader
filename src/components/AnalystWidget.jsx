@@ -54,12 +54,12 @@ export const AnalystWidget = ({ forecast, currentPrice, lang }) => {
   const currentLabelColor = avgScore >= 3.5 ? 'text-accent-teal' : avgScore >= 2.5 ? 'text-amber-500' : 'text-accent-coral';
 
   const Bar = ({ label, count, color }) => (
-    <div className="flex items-center gap-3 text-xs mb-2">
-      <div className="w-16 text-slate-500 dark:text-slate-400 font-medium">{label}</div>
-      <div className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-        <div className={`h-full ${color} rounded-full`} style={{ width: `${(count / totalAnalysts) * 100}%` }} />
+    <div className="flex items-center gap-3 text-xs mb-3">
+      <div className="w-20 text-slate-500 dark:text-slate-400 font-bold whitespace-nowrap overflow-hidden text-ellipsis">{label}</div>
+      <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden flex" dir="ltr">
+        <div className={`h-full ${color} rounded-full transition-all duration-1000`} style={{ width: `${(count / totalAnalysts) * 100}%` }} />
       </div>
-      <div className="w-6 text-right text-slate-700 dark:text-slate-300 font-mono">{count}</div>
+      <div className="w-6 text-slate-700 dark:text-slate-300 font-mono font-bold">{count}</div>
     </div>
   );
 
@@ -74,8 +74,8 @@ export const AnalystWidget = ({ forecast, currentPrice, lang }) => {
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">{t.basedOn}</p>
 
         {/* Gauge */}
-        <div className="relative w-48 h-24 mx-auto mb-4">
-          <svg viewBox="0 0 100 50" className="w-full h-full overflow-visible">
+        <div className="relative w-48 h-28 mx-auto mb-4" dir="ltr">
+          <svg viewBox="0 0 100 55" className="w-full h-full overflow-visible drop-shadow-md">
             <defs>
               <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor="#f97316" />   {/* Orange/Sell */}
@@ -87,7 +87,7 @@ export const AnalystWidget = ({ forecast, currentPrice, lang }) => {
               d="M 10 50 A 40 40 0 0 1 90 50"
               fill="none"
               stroke="url(#gaugeGrad)"
-              strokeWidth="8"
+              strokeWidth="10"
               strokeLinecap="round"
               className="opacity-20"
             />
@@ -95,7 +95,7 @@ export const AnalystWidget = ({ forecast, currentPrice, lang }) => {
               d="M 10 50 A 40 40 0 0 1 90 50"
               fill="none"
               stroke="url(#gaugeGrad)"
-              strokeWidth="8"
+              strokeWidth="10"
               strokeLinecap="round"
               strokeDasharray="125.6"
               strokeDashoffset="0"
@@ -103,11 +103,11 @@ export const AnalystWidget = ({ forecast, currentPrice, lang }) => {
             
             {/* Needle */}
             <g transform={`rotate(${angle}, 50, 50)`}>
-              <circle cx="50" cy="50" r="3" fill="currentColor" className="text-slate-800 dark:text-white" />
+              <circle cx="50" cy="50" r="4" fill="currentColor" className="text-slate-800 dark:text-white" />
               <polygon points="48,50 52,50 50,15" fill="currentColor" className="text-slate-800 dark:text-white" />
             </g>
           </svg>
-          <div className={`absolute -bottom-4 w-full text-center font-bold text-sm ${currentLabelColor}`}>
+          <div className={`absolute bottom-0 w-full text-center font-bold text-lg drop-shadow-sm ${currentLabelColor}`}>
             {currentLabel}
           </div>
         </div>
@@ -140,17 +140,16 @@ export const AnalystWidget = ({ forecast, currentPrice, lang }) => {
           </div>
 
           {/* Target Cone UI */}
-          <div className="relative h-32 mt-4 flex">
+          <div className="relative h-40 mt-4 flex" dir="ltr">
             {/* Fake historical line chart (left half) */}
-            <div className="w-1/3 h-full relative">
+            <div className="w-1/4 h-full relative">
               <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
-                <path d="M0,80 Q20,60 40,70 T80,40 L100,50" fill="none" stroke="#3b82f6" strokeWidth="2" />
-                <circle cx="100" cy="50" r="3" fill="#3b82f6" />
+                <path d="M0,80 Q20,60 40,70 T80,40 L100,50" fill="none" stroke="#3b82f6" strokeWidth="3" />
+                <circle cx="100" cy="50" r="4" fill="#3b82f6" />
               </svg>
             </div>
-            {/* Forecast cone (right two-thirds) */}
-            <div className="flex-1 h-full relative border-l border-slate-300 dark:border-slate-700">
-               {/* Map prices to Y axis 0-100 */}
+            {/* Forecast cone (right three-quarters) */}
+            <div className="flex-1 h-full relative border-l-2 border-slate-300 dark:border-slate-700">
                {(() => {
                  const minP = Math.min(priceTargets.min, currentPrice) * 0.9;
                  const maxP = Math.max(priceTargets.max, currentPrice) * 1.1;
@@ -164,33 +163,38 @@ export const AnalystWidget = ({ forecast, currentPrice, lang }) => {
 
                  return (
                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full absolute inset-0 overflow-visible">
-                      {/* Polygon for cone background */}
                       <polygon points={`0,${yCurr} 100,${yMax} 100,${yMin}`} fill="rgba(59, 130, 246, 0.05)" />
-                      {/* Dotted lines */}
-                      <line x1="0" y1={yCurr} x2="100" y2={yMax} stroke="#14b8a6" strokeWidth="1.5" strokeDasharray="4 2" />
-                      <line x1="0" y1={yCurr} x2="100" y2={yAvg} stroke="#3b82f6" strokeWidth="1.5" strokeDasharray="4 2" />
-                      <line x1="0" y1={yCurr} x2="100" y2={yMin} stroke="#fb7185" strokeWidth="1.5" strokeDasharray="4 2" />
+                      
+                      <line x1="0" y1={yCurr} x2="100" y2={yMax} stroke="#14b8a6" strokeWidth="2" strokeDasharray="4 4" />
+                      <line x1="0" y1={yCurr} x2="100" y2={yAvg} stroke="#3b82f6" strokeWidth="2" strokeDasharray="4 4" />
+                      <line x1="0" y1={yCurr} x2="100" y2={yMin} stroke="#fb7185" strokeWidth="2" strokeDasharray="4 4" />
                       
                       {/* Labels */}
-                      <foreignObject x="45" y={yMax - 8} width="60" height="20" className="overflow-visible">
-                        <div className="text-[9px] font-bold text-accent-teal bg-teal-500/10 px-1 rounded inline-block">{t.max} {(priceTargets.max/currentPrice - 1)*100 > 0 ? '+' : ''}{((priceTargets.max/currentPrice - 1)*100).toFixed(0)}%</div>
+                      <foreignObject x="35" y={yMax - 8} width="65" height="20" className="overflow-visible">
+                        <div className="flex items-center gap-1">
+                          <span className="text-[10px] font-bold text-accent-teal bg-teal-500/10 px-1.5 py-0.5 rounded shadow-sm">{t.max} {(priceTargets.max/currentPrice - 1)*100 > 0 ? '+' : ''}{((priceTargets.max/currentPrice - 1)*100).toFixed(0)}%</span>
+                        </div>
                       </foreignObject>
-                      <foreignObject x="45" y={yAvg - 8} width="60" height="20" className="overflow-visible">
-                        <div className="text-[9px] font-bold text-blue-500 bg-blue-500/10 px-1 rounded inline-block">{t.avg} {(priceTargets.avg/currentPrice - 1)*100 > 0 ? '+' : ''}{((priceTargets.avg/currentPrice - 1)*100).toFixed(0)}%</div>
+                      <foreignObject x="35" y={yAvg - 8} width="65" height="20" className="overflow-visible">
+                        <div className="flex items-center gap-1">
+                          <span className="text-[10px] font-bold text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded shadow-sm">{t.avg} {(priceTargets.avg/currentPrice - 1)*100 > 0 ? '+' : ''}{((priceTargets.avg/currentPrice - 1)*100).toFixed(0)}%</span>
+                        </div>
                       </foreignObject>
-                      <foreignObject x="45" y={yMin - 8} width="60" height="20" className="overflow-visible">
-                        <div className="text-[9px] font-bold text-accent-coral bg-rose-500/10 px-1 rounded inline-block">{t.min} {(priceTargets.min/currentPrice - 1)*100 > 0 ? '+' : ''}{((priceTargets.min/currentPrice - 1)*100).toFixed(0)}%</div>
+                      <foreignObject x="35" y={yMin - 8} width="65" height="20" className="overflow-visible">
+                        <div className="flex items-center gap-1">
+                          <span className="text-[10px] font-bold text-accent-coral bg-rose-500/10 px-1.5 py-0.5 rounded shadow-sm">{t.min} {(priceTargets.min/currentPrice - 1)*100 > 0 ? '+' : ''}{((priceTargets.min/currentPrice - 1)*100).toFixed(0)}%</span>
+                        </div>
                       </foreignObject>
 
                       {/* Right side values */}
-                      <foreignObject x="105" y={yMax - 6} width="40" height="20" className="overflow-visible">
-                        <div className="text-[10px] font-mono text-slate-500">{priceTargets.max.toFixed(2)}</div>
+                      <foreignObject x="102" y={yMax - 8} width="45" height="20" className="overflow-visible">
+                        <div className="text-[11px] font-mono font-bold text-slate-600 dark:text-slate-400 bg-white/50 dark:bg-slate-900/50 px-1 rounded">{priceTargets.max.toFixed(2)}</div>
                       </foreignObject>
-                      <foreignObject x="105" y={yAvg - 6} width="40" height="20" className="overflow-visible">
-                        <div className="text-[10px] font-mono text-slate-500">{priceTargets.avg.toFixed(2)}</div>
+                      <foreignObject x="102" y={yAvg - 8} width="45" height="20" className="overflow-visible">
+                        <div className="text-[11px] font-mono font-bold text-slate-600 dark:text-slate-400 bg-white/50 dark:bg-slate-900/50 px-1 rounded">{priceTargets.avg.toFixed(2)}</div>
                       </foreignObject>
-                      <foreignObject x="105" y={yMin - 6} width="40" height="20" className="overflow-visible">
-                        <div className="text-[10px] font-mono text-slate-500">{priceTargets.min.toFixed(2)}</div>
+                      <foreignObject x="102" y={yMin - 8} width="45" height="20" className="overflow-visible">
+                        <div className="text-[11px] font-mono font-bold text-slate-600 dark:text-slate-400 bg-white/50 dark:bg-slate-900/50 px-1 rounded">{priceTargets.min.toFixed(2)}</div>
                       </foreignObject>
                    </svg>
                  );
