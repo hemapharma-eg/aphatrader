@@ -807,7 +807,7 @@ export default function App() {
             LATEST MARKET NEWS:
             ${newsContext}
             
-            Answer the user's question in ${lang === 'ar' ? 'Arabic' : 'English'} directly without markdown fences. Provide numbers and insights.` }] },
+            Answer the user's question in ${lang === 'ar' ? 'Arabic' : 'English'}. VERY IMPORTANT: Make your answer extremely easy to read. Use structured formatting with well-spaced bullet points (- ), numbered lists, and short paragraphs. Avoid walls of text. Provide hard numbers and deep insights.` }] },
           })
         });
 
@@ -885,7 +885,7 @@ export default function App() {
               </div>
               <div className={`flex flex-col gap-2 min-w-0 flex-1 ${msg.role === 'user' && lang === 'ar' ? 'items-end' : ''}`}>
                 {msg.content && (
-                  <div className={`text-sm leading-relaxed p-4 rounded-2xl break-words ${msg.role === 'user' ? 'bg-slate-800 text-slate-200' : 'bg-transparent text-slate-300'}`}>
+                  <div className={`text-sm leading-relaxed p-4 rounded-2xl break-words whitespace-pre-wrap ${msg.role === 'user' ? 'bg-slate-800 text-slate-200' : 'bg-transparent text-slate-300'}`}>
                     {msg.content}
                   </div>
                 )}
